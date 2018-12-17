@@ -1,5 +1,8 @@
 # EasyJWT
 
+[![Build Status](https://travis-ci.org/BMeu/EasyJWT.svg?branch=master)](https://travis-ci.org/BMeu/EasyJWT)
+[![codecov](https://codecov.io/gh/BMeu/EasyJWT/branch/master/graph/badge.svg)](https://codecov.io/gh/BMeu/EasyJWT)
+
 Super simple JSON Web Tokens in Python
 
 ## License
