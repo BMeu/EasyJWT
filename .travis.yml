@@ -2,13 +2,18 @@ sudo: false
 
 language: python
 
-python:
-  - "3.6"
-  - "3.6-dev"
-  - "3.7"
-  - "3.7-dev"
-  - "3.8-dev"
-  - "nightly"
+matrix:
+  include:
+    - python: "3.6"
+    - python: "3.6-dev"
+    - python: "3.7"
+      dist: xenial
+      sudo: true
+    - python: "3.7-dev"
+    - python: "3.8-dev"
+      dist: xenial
+      sudo: true
+    - python: "nightly"
 
 env:
   global:
@@ -21,9 +26,9 @@ install:
 
 script:
   - flake8
-  - coverage run -m unittest discover -v -s tests -p "*_test.py" -t .
-  - sphinx-apidoc -o docs/source/api app app/configuration
-  - sphinx-build -b html docs/source docs/build
+  # - coverage run -m unittest discover -v -s tests -p "*_test.py" -t .
+  # - sphinx-apidoc -o docs/source/api app app/configuration
+  # - sphinx-build -b html docs/source docs/build
 
 after_success:
 - codecov
