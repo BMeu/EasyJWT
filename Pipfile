@@ -9,4 +9,5 @@ flake8 = "*"
 Sphinx = "*"
 
 [packages]
+bidict = "*"
 PyJWT = "*"

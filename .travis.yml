@@ -26,9 +26,9 @@ install:
 
 script:
   - flake8
-  # - coverage run -m unittest discover -v -s tests -p "*_test.py" -t .
-  # - sphinx-apidoc -o docs/source/api app app/configuration
-  # - sphinx-build -b html docs/source docs/build
+  - coverage run -m unittest discover -v -s tests -p "*_test.py" -t .
+  - sphinx-apidoc -o docs/source/api app app/configuration
+  - sphinx-build -b html docs/source docs/build
 
 after_success:
 - codecov
