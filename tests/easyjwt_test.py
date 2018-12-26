@@ -93,7 +93,7 @@ class EasyJWTTest(TestCase):
         """
         payload_fields = {'_easyjwt_class', 'exp'}
         jwtoken = EasyJWT(self.key)
-        self.assertSetEqual(payload_fields, set(jwtoken._get_payload_fields()))
+        self.assertSetEqual(payload_fields, jwtoken._get_payload_fields())
 
     def test_get_payload(self):
         """
@@ -117,7 +117,7 @@ class EasyJWTTest(TestCase):
         jwtoken = EasyJWT(self.key)
         payload_fields = jwtoken._get_payload_fields()
         payload = jwtoken._get_payload()
-        self.assertListEqual(payload_fields, list(payload.keys()))
+        self.assertSetEqual(payload_fields, set(payload.keys()))
 
     def test_restore_payload(self):
         """

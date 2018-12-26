@@ -135,16 +135,15 @@ class EasyJWT(object):
         token = token_bytes.decode('utf-8')
         return token
 
-    def _get_payload_fields(self) -> typing.List[str]:
+    def _get_payload_fields(self) -> typing.Set[str]:
         """
             Get all fields that are part of the payload.
 
-            :return: A list of names of the instance variables that make up the payload fields.
+            :return: A set of names of the instance variables that make up the payload fields.
         """
-        # TODO: Return a set?
         # TODO: Return self._get_payload().keys()
 
-        return [self._map_instance_var_to_payload_field(field) for field in vars(self) if self._is_payload_field(field)]
+        return {self._map_instance_var_to_payload_field(field) for field in vars(self) if self._is_payload_field(field)}
 
     def _get_payload(self) -> typing.Dict[str, typing.Any]:
         """
@@ -196,7 +195,7 @@ class EasyJWT(object):
 
         # Determine missing and unexpected fields. Missing fields are those specified in this class but not given in the
         # payload. Unexpected fields are those given in the payload but not specified in this class.
-        expected_fields = set(self._get_payload_fields())
+        expected_fields = self._get_payload_fields()
         actual_fields = set(payload.keys())
 
         # Use the name of the instance variable for missing payload fields to avoid confusion.
