@@ -35,14 +35,13 @@ class EasyJWT(object):
         still be decoded properly.
     """
 
-    # TODO: Make a set.
     # TODO: Make public, but do not include in the token.
-    _previous_algorithms: typing.List[Algorithm] = []
+    _previous_algorithms: typing.Set[Algorithm] = {}
     """
         All algorithms that have previously been used for encoding the token, needed for decoding the token.
 
-        When changing the :attr:`_algorithm`, its old value must be added to this list. The algorithm specified in
-        :attr:`_algorithm` does not have to be part of this list.
+        When changing the :attr:`_algorithm`, its old value must be added to this set. The algorithm specified in
+        :attr:`_algorithm` does not have to be part of this set.
     """
 
     _instance_var_payload_field_mapping: bidict.bidict = bidict.bidict(
