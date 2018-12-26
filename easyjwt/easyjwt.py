@@ -10,10 +10,10 @@ import typing
 import bidict
 import jwt
 
+from . import Algorithm
 from . import InvalidPayloadError
 
 
-# TODO: Use an enum for the algorithms instead of strings.
 class EasyJWT(object):
     """
         A base class for representing JSON Web Tokens (JWT).
@@ -24,7 +24,8 @@ class EasyJWT(object):
         token).
     """
 
-    _algorithm: str = 'HS256'
+    # TODO: Make public, but do not include in the token.
+    _algorithm: Algorithm = Algorithm.HS256
     """
         The algorithm used for encoding the token.
 
@@ -33,7 +34,8 @@ class EasyJWT(object):
     """
 
     # TODO: Make a set.
-    _previous_algorithms: typing.List[str] = []
+    # TODO: Make public, but do not include in the token.
+    _previous_algorithms: typing.List[Algorithm] = []
     """
         All algorithms that have previously been used for encoding the token, needed for decoding the token.
 
@@ -126,7 +128,7 @@ class EasyJWT(object):
 
         # Encode the object.
         payload = self._get_payload()
-        token_bytes = jwt.encode(payload, self._key, algorithm=self._algorithm)
+        token_bytes = jwt.encode(payload, self._key, algorithm=self._algorithm.value)
 
         # The encoded payload is a bytestream. Create a UTF-8 string.
         token = token_bytes.decode('utf-8')
@@ -224,7 +226,9 @@ class EasyJWT(object):
             :return: A set of all algorithms ever used for encoding the tokens.
         """
 
-        return set(cls._previous_algorithms + [cls._algorithm])
+        algorithms = {algorithm.value for algorithm in cls._previous_algorithms}
+        algorithms.add(cls._algorithm.value)
+        return algorithms
 
     @classmethod
     def _is_payload_field(cls, instance_var: str) -> bool:

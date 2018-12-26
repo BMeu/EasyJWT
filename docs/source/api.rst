@@ -10,6 +10,13 @@ Classes
     :members:
     :show-inheritance:
 
+Enumerations
+------------
+
+.. autoclass:: easyjwt.Algorithm
+    :members:
+    :show-inheritance:
+
 Errors
 ------
 

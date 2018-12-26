@@ -5,6 +5,7 @@ from unittest import TestCase
 
 from time import time
 
+from easyjwt import Algorithm
 from easyjwt import EasyJWT
 from easyjwt import InvalidPayloadError
 
@@ -235,10 +236,10 @@ class EasyJWTTest(TestCase):
         current_alg_temp = EasyJWT._algorithm
         previous_algs_temp = EasyJWT._previous_algorithms
 
-        EasyJWT._algorithm = 'HS256'
-        EasyJWT._previous_algorithms = ['SHA1', 'MD5']
+        EasyJWT._algorithm = Algorithm.HS256
+        EasyJWT._previous_algorithms = [Algorithm.HS384, Algorithm.HS512]
 
-        algorithms = {'HS256', 'SHA1', 'MD5'}
+        algorithms = {Algorithm.HS256.value, Algorithm.HS384.value, Algorithm.HS512.value}
         self.assertSetEqual(algorithms, EasyJWT._get_decode_algorithms())
 
         # Restore the class variables.

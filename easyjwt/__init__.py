@@ -2,14 +2,17 @@
 # -*- coding: utf-8 -*-
 
 """
-    Just a test.
+    EasyJWT
 """
+# TODO: Improve package documentation.
 
+from .enums import Algorithm
 from .errors import EasyJWTError
 from .errors import InvalidPayloadError
 from .easyjwt import EasyJWT
 
 __all__ = [
+    'Algorithm',
     'EasyJWT',
     'EasyJWTError',
     'InvalidPayloadError',
