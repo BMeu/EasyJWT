@@ -11,7 +11,9 @@ import bidict
 import jwt
 
 from . import Algorithm
-from . import InvalidPayloadError
+from . import MissingClassError
+from . import PayloadFieldError
+from . import WrongClassError
 
 
 class EasyJWT(object):
@@ -179,26 +181,29 @@ class EasyJWT(object):
 
             :param payload: The payload to verify.
             :return: ``True`` if the payload contains all expected fields and is of this class, ``False`` otherwise.
-            :raise InvalidJWTokenPayloadError: If the payload does not contain exactly the expected fields or if the
-                                               class is wrong.
+            :raise MissingClassError: If the payload does not contain the class with which the token has been created.
+            :raise PayloadFieldError: If the payload does not contain exactly the expected fields.
+            :raise WrongClassError: If the payload is not verified with the class with which the token has been created.
         """
 
         # Check the token's class: it must be specified and be this class.
         class_name = self._get_class_name()
         payload_class_name = payload.get('_easyjwt_class', None)
         if payload_class_name is None:
-            raise InvalidPayloadError('Invalid payload. Missing class specification.')
+            raise MissingClassError()
 
         if payload_class_name != class_name:
-            message = f'Invalid payload. Wrong class: expected {class_name}, got {payload_class_name}'
-            raise InvalidPayloadError(message)
+            raise WrongClassError(expected_class=class_name, actual_class=payload_class_name)
 
         # Determine missing and unexpected fields. Missing fields are those specified in this class but not given in the
         # payload. Unexpected fields are those given in the payload but not specified in this class.
         expected_fields = set(self._get_payload_fields())
         actual_fields = set(payload.keys())
 
-        missing_fields = expected_fields.difference(actual_fields)
+        # Use the name of the instance variable for missing payload fields to avoid confusion.
+        # For unexpected fields, use the name of the payload field.
+        missing_fields = {self._map_payload_field_to_instance_var(field) for field
+                          in expected_fields.difference(actual_fields)}
         unexpected_fields = actual_fields.difference(expected_fields)
 
         # If there are no missing fields or unexpected fields, everything is fine.
@@ -206,8 +211,7 @@ class EasyJWT(object):
             return True
 
         # Otherwise, raise an exception.
-        message = f'Invalid payload. Missing fields: {missing_fields}. Unexpected fields: {unexpected_fields}'
-        raise InvalidPayloadError(message)
+        raise PayloadFieldError(missing_fields, unexpected_fields)
 
     def _get_class_name(self) -> str:
         """

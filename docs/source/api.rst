@@ -23,5 +23,14 @@ Errors
 .. autoclass:: easyjwt.EasyJWTError
     :show-inheritance:
 
-.. autoclass:: easyjwt.InvalidPayloadError
+.. autoclass:: easyjwt.InvalidPayloadBaseError
+    :show-inheritance:
+
+.. autoclass:: easyjwt.MissingClassError
+    :show-inheritance:
+
+.. autoclass:: easyjwt.PayloadFieldError
+    :show-inheritance:
+
+.. autoclass:: easyjwt.WrongClassError
     :show-inheritance:

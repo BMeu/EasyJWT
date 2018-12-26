@@ -7,7 +7,9 @@ from time import time
 
 from easyjwt import Algorithm
 from easyjwt import EasyJWT
-from easyjwt import InvalidPayloadError
+from easyjwt import MissingClassError
+from easyjwt import PayloadFieldError
+from easyjwt import WrongClassError
 
 
 class EasyJWTTest(TestCase):
@@ -65,7 +67,7 @@ class EasyJWTTest(TestCase):
 
         token = jwtoken_creation.create()
 
-        with self.assertRaises(InvalidPayloadError) as exception_cm:
+        with self.assertRaises(PayloadFieldError) as exception_cm:
             jwtoken_verification = EasyJWT.verify(token, self.key)
             self.assertIsNone(jwtoken_verification)
             self.assertIn(fake_field, str(exception_cm.exception))
@@ -146,75 +148,76 @@ class EasyJWTTest(TestCase):
         """
             Test verifying a payload with a missing class field.
 
-            Expected result: An exception with an explaining message is raised.
+            Expected result: The exception for a missing class is raised.
         """
         jwtoken = EasyJWT(self.key)
         payload = jwtoken._get_payload()
         del payload['_easyjwt_class']
 
-        with self.assertRaises(InvalidPayloadError) as exception_cm:
+        with self.assertRaises(MissingClassError):
             jwtoken._verify_payload(payload)
-            # TODO: The next assertion is not working.
-            self.assertIn('Missing class specification', str(exception_cm.exception))
 
     def test_verify_payload_failure_wrong_class(self):
         """
             Test verifying a payload with a faulty value in the class field.
 
-            Expected result: An exception with an explaining message is raised.
+            Expected result: An exception with an explaining _message is raised.
         """
         jwtoken = EasyJWT(self.key)
         payload = jwtoken._get_payload()
         payload['_easyjwt_class'] = 'InheritedEasyJWT'
 
-        with self.assertRaises(InvalidPayloadError) as exception_cm:
+        with self.assertRaises(WrongClassError) as exception_cm:
             jwtoken._verify_payload(payload)
-            self.assertIn('Wrong class: expected EasyJWT, got InheritedEasyJWT', str(exception_cm.exception))
+
+        self.assertEqual('Expected class EasyJWT. Got class InheritedEasyJWT', str(exception_cm.exception))
 
     def test_verify_payload_failure_missing_fields(self):
         """
             Test verifying a payload with missing fields.
 
-            Expected result: An exception with an explaining message is raised.
+            Expected result: An exception with an explaining _message is raised.
         """
         jwtoken = EasyJWT(self.key)
         payload = jwtoken._get_payload()
-        del payload['_easyjwt_class']
+        del payload['exp']
 
-        with self.assertRaises(InvalidPayloadError) as exception_cm:
+        with self.assertRaises(PayloadFieldError) as exception_cm:
             jwtoken._verify_payload(payload)
-            # TODO: The next assertion is not working.
-            self.assertIn('Missing fields: {_easyjwt_class}. Unexpected fields: {}', str(exception_cm.exception))
+
+        self.assertEqual('Missing fields: {expiration_date}. Unexpected fields: {}', str(exception_cm.exception))
 
     def test_verify_payload_failure_unexpected_fields(self):
         """
             Test verifying a payload with unexpected fields.
 
-            Expected result: An exception with an explaining message is raised.
+            Expected result: An exception with an explaining _message is raised.
         """
         jwtoken = EasyJWT(self.key)
         payload = jwtoken._get_payload()
         payload['user_id'] = 1
 
-        with self.assertRaises(InvalidPayloadError) as exception_cm:
+        with self.assertRaises(PayloadFieldError) as exception_cm:
             jwtoken._verify_payload(payload)
-            self.assertIn('Missing fields: {}. Unexpected fields: {user_id}', str(exception_cm.exception))
+
+        self.assertEqual('Missing fields: {}. Unexpected fields: {user_id}', str(exception_cm.exception))
 
     def test_verify_payload_failure_missing_and_unexpected_fields(self):
         """
             Test verifying a payload with missing and unexpected fields.
 
-            Expected result: An exception with an explaining message is raised.
+            Expected result: An exception with an explaining _message is raised.
         """
-        jwtoken = EasyJWT(self.key)
-        payload = jwtoken._get_payload()
-        del payload['_easyjwt_class']
+        easyjwt = EasyJWT(self.key)
+        easyjwt.expiration_date = self.expiration_date
+        payload = easyjwt._get_payload()
+        del payload['exp']
         payload['user_id'] = 1
 
-        with self.assertRaises(InvalidPayloadError) as exception_cm:
-            jwtoken._verify_payload(payload)
-            # TODO: The next assertion is not working.
-            self.assertIn('Missing fields: {_easyjwt_class}. Unexpected fields: {user_id}', str(exception_cm.exception))
+        with self.assertRaises(PayloadFieldError) as exception_cm:
+            easyjwt._verify_payload(payload)
+
+        self.assertEqual('Missing fields: {expiration_date}. Unexpected fields: {user_id}', str(exception_cm.exception))
 
     def test_get_class_name(self):
         """

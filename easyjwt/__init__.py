@@ -8,12 +8,18 @@
 
 from .enums import Algorithm
 from .errors import EasyJWTError
-from .errors import InvalidPayloadError
+from .errors import InvalidPayloadBaseError
+from .errors import MissingClassError
+from .errors import PayloadFieldError
+from .errors import WrongClassError
 from .easyjwt import EasyJWT
 
 __all__ = [
     'Algorithm',
     'EasyJWT',
     'EasyJWTError',
-    'InvalidPayloadError',
+    'InvalidPayloadBaseError',
+    'MissingClassError',
+    'PayloadFieldError',
+    'WrongClassError',
 ]
