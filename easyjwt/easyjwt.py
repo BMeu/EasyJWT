@@ -141,9 +141,8 @@ class EasyJWT(object):
 
             :return: A set of names of the instance variables that make up the payload fields.
         """
-        # TODO: Return self._get_payload().keys()
 
-        return {self._map_instance_var_to_payload_field(field) for field in vars(self) if self._is_payload_field(field)}
+        return set(self._get_payload().keys())
 
     def _get_payload(self) -> typing.Dict[str, typing.Any]:
         """
