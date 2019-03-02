@@ -3,7 +3,9 @@
 
 from unittest import TestCase
 
-from time import time
+from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
 
 from easyjwt import Algorithm
 from easyjwt import EasyJWT
@@ -20,7 +22,9 @@ class EasyJWTTest(TestCase):
         """
 
         self.key = 'abcdefghijklmnopqrstuvwxyz'
-        self.expiration_date = time() + (15 * 60)
+
+        # Do not use microseconds.
+        self.expiration_date = datetime.now().replace(microsecond=0) + timedelta(minutes=15)
 
     def test_init(self):
         """
@@ -130,9 +134,11 @@ class EasyJWTTest(TestCase):
             exp=946684800.0,
         )
 
+        datetime_expiration = datetime.utcfromtimestamp(payload['exp'])
+
         jwtoken = EasyJWT(self.key)
         jwtoken._restore_payload(payload)
-        self.assertEqual(payload['exp'], jwtoken.expiration_date)
+        self.assertEqual(datetime_expiration, jwtoken.expiration_date)
 
     def test_verify_payload_success(self):
         """
@@ -249,6 +255,24 @@ class EasyJWTTest(TestCase):
         EasyJWT.algorithm = current_alg_temp
         EasyJWT.previous_algorithms = previous_algs_temp
 
+    def test_get_restore_method_for_payload_field_expiration_date(self):
+        """
+            Test getting the restore method for the expiration date.
+
+            Expected Result: The method `_restore_payload_field_expiration_date()` is returned.
+        """
+        restore_method = EasyJWT._get_restore_method_for_payload_field('expiration_date')
+        self.assertEqual(EasyJWT._restore_payload_field_expiration_date, restore_method)
+
+    def test_get_restore_method_for_payload_field_none(self):
+        """
+            Test getting the restore method for a payload that has no such method.
+
+            Expected Result: `None`.
+        """
+        restore_method = EasyJWT._get_restore_method_for_payload_field('payload_field_with_no_restore_method')
+        self.assertIsNone(restore_method)
+
     def test_is_payload_field_expiration_date(self):
         """
             Test if the instance variable for the expiration date is a payload field.
@@ -330,6 +354,17 @@ class EasyJWTTest(TestCase):
         payload_field = 'part_of_the_payload'
         self.assertNotIn(payload_field, EasyJWT._instance_var_payload_field_mapping.inv)
         self.assertEqual(payload_field, EasyJWT._map_payload_field_to_instance_var(payload_field))
+
+    def test_restore_payload_field_expiration_date(self):
+        """
+            Test restoring the expiration date.
+
+            Expected Result: The correct `datetime` object is returned.
+        """
+        expiration_date = datetime(year=2019, month=1, day=1, hour=1, minute=2, second=3)
+        timestamp = int(expiration_date.replace(tzinfo=timezone.utc).timestamp())
+
+        self.assertEqual(expiration_date, EasyJWT._restore_payload_field_expiration_date(timestamp))
 
     def test_str(self):
         """

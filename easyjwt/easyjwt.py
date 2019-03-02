@@ -7,6 +7,8 @@
 
 import typing
 
+import datetime
+
 import bidict
 import jwt
 
@@ -57,18 +59,21 @@ class EasyJWT(object):
         instance variable.
     """
 
-    # TODO: Use a set.
-    _private_payload_fields: typing.List[str] = [
+    _private_payload_fields: typing.Set[str] = {
         '_easyjwt_class',
-    ]
+    }
     """
-        List of instance variable names that are part of the payload although their names begin with an underscore.
+        Set of instance variable names that are part of the payload although their names begin with an underscore.
     """
 
     _public_non_payload_fields: typing.Set[str] = {
         'algorithm',
         'previous_algorithms',
     }
+    """
+        Set of instance variable names that are not part of the payload although their names do not begin with an
+        underscore.
+    """
 
     def __init__(self, key: str) -> None:
         """
@@ -82,14 +87,9 @@ class EasyJWT(object):
             Used for validating a token.
         """
 
-        # TODO: Use datetime.
-        self.expiration_date: typing.Optional[float] = None
+        self.expiration_date: typing.Optional[datetime.datetime] = None
         """
             The date and time at which this token will expire.
-
-            Specified as the time in seconds since the epoch_.
-
-            .. _epoch: https://docs.python.org/3/library/time.html#epoch
         """
 
         self._key: str = key
@@ -139,6 +139,15 @@ class EasyJWT(object):
         token = token_bytes.decode('utf-8')
         return token
 
+    def _get_class_name(self) -> str:
+        """
+            Get the class of the own object.
+
+            :return: The name of the class of which ``self`` is.
+        """
+
+        return type(self).__name__
+
     def _get_payload_fields(self) -> typing.Set[str]:
         """
             Get all fields that are part of the payload.
@@ -170,6 +179,13 @@ class EasyJWT(object):
         for field, value in payload.items():
             # Find the corresponding instance variable.
             field = self._map_payload_field_to_instance_var(field)
+
+            # Restore the value (if necessary).
+            restore_method = self._get_restore_method_for_payload_field(field)
+            if restore_method is not None:
+                value = restore_method(value)
+
+            # Actually set the value.
             setattr(self, field, value)
 
     def _verify_payload(self, payload: typing.Dict[str, typing.Any]) -> bool:
@@ -214,15 +230,6 @@ class EasyJWT(object):
         # Otherwise, raise an exception.
         raise PayloadFieldError(missing_fields, unexpected_fields)
 
-    def _get_class_name(self) -> str:
-        """
-            Get the class of the own object.
-
-            :return: The name of the class of which ``self`` is.
-        """
-
-        return type(self).__name__
-
     @classmethod
     def _get_decode_algorithms(cls) -> typing.Set[str]:
         """
@@ -234,6 +241,21 @@ class EasyJWT(object):
         algorithms = {algorithm.value for algorithm in cls.previous_algorithms}
         algorithms.add(cls.algorithm.value)
         return algorithms
+
+    @classmethod
+    def _get_restore_method_for_payload_field(cls, field: str) -> typing.Optional[typing.Callable[[typing.Any],
+                                                                                                  typing.Any]]:
+        """
+            Get the method for the given payload field that restores the field's value to the expected format.
+
+            :param field: The payload field for which the restore method will be returned.
+            :return: The method for the given field if it exists. `None` if there is no such method.
+        """
+        method_name = f'_restore_payload_field_{field}'
+        if hasattr(cls, method_name) and callable(getattr(cls, method_name)):
+            return getattr(cls, method_name)
+
+        return None
 
     @classmethod
     def _is_payload_field(cls, instance_var: str) -> bool:
@@ -287,6 +309,16 @@ class EasyJWT(object):
 
         # If the payload field is not defined in the mapping, return its field name.
         return cls._instance_var_payload_field_mapping.inv.get(payload_field, payload_field)
+
+    @staticmethod
+    def _restore_payload_field_expiration_date(payload_value: int) -> datetime.datetime:
+        """
+            Restore the expiration date to a `datetime` object.
+
+            :param payload_value: The expiration date as number of seconds since the epoch.
+            :return: The corresponding `datetime object.`
+        """
+        return datetime.datetime.utcfromtimestamp(payload_value)
 
     def __str__(self):
         """
