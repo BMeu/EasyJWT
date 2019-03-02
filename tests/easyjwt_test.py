@@ -236,18 +236,18 @@ class EasyJWTTest(TestCase):
         """
         # Temporarily save the current class variables to restore them later. Otherwise, changes could influence other
         # parts of the tests.
-        current_alg_temp = EasyJWT._algorithm
-        previous_algs_temp = EasyJWT._previous_algorithms
+        current_alg_temp = EasyJWT.algorithm
+        previous_algs_temp = EasyJWT.previous_algorithms
 
-        EasyJWT._algorithm = Algorithm.HS256
-        EasyJWT._previous_algorithms = [Algorithm.HS384, Algorithm.HS512]
+        EasyJWT.algorithm = Algorithm.HS256
+        EasyJWT.previous_algorithms = [Algorithm.HS384, Algorithm.HS512]
 
         algorithms = {Algorithm.HS256.value, Algorithm.HS384.value, Algorithm.HS512.value}
         self.assertSetEqual(algorithms, EasyJWT._get_decode_algorithms())
 
         # Restore the class variables.
-        EasyJWT._algorithm = current_alg_temp
-        EasyJWT._previous_algorithms = previous_algs_temp
+        EasyJWT.algorithm = current_alg_temp
+        EasyJWT.previous_algorithms = previous_algs_temp
 
     def test_is_payload_field_expiration_date(self):
         """
@@ -256,6 +256,15 @@ class EasyJWTTest(TestCase):
             Expected Result: `True`.
         """
         self.assertTrue(EasyJWT._is_payload_field('expiration_date'))
+
+    def test_is_payload_field_blacklist(self):
+        """
+            Test if the instance variables in the blacklist are payload fields.
+
+            Expected Result: `False`
+        """
+        for instance_var in EasyJWT._public_non_payload_fields:
+            self.assertFalse(EasyJWT._is_payload_field(instance_var), f'{instance_var} is a payload field')
 
     def test_is_payload_field_whitelist(self):
         """
@@ -278,7 +287,7 @@ class EasyJWTTest(TestCase):
 
     def test_is_payload_field_public_instance_vars(self):
         """
-            Test if public instance variables (that are not in the whitelist) are payload fields.
+            Test if public instance variables (that are not in the whitelist and the blacklist) are payload fields.
 
             Expected Result: `True`
         """

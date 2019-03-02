@@ -26,22 +26,20 @@ class EasyJWT(object):
         token).
     """
 
-    # TODO: Make public, but do not include in the token.
-    _algorithm: Algorithm = Algorithm.HS256
+    algorithm: Algorithm = Algorithm.HS256
     """
         The algorithm used for encoding the token.
 
-        When changing the algorithm, its old value must be added to :attr:`_previous_algorithms` so that old tokens may
+        When changing the algorithm, its old value must be added to :attr:`previous_algorithms` so that old tokens may
         still be decoded properly.
     """
 
-    # TODO: Make public, but do not include in the token.
-    _previous_algorithms: typing.Set[Algorithm] = {}
+    previous_algorithms: typing.Set[Algorithm] = {}
     """
         All algorithms that have previously been used for encoding the token, needed for decoding the token.
 
-        When changing the :attr:`_algorithm`, its old value must be added to this set. The algorithm specified in
-        :attr:`_algorithm` does not have to be part of this set.
+        When changing the :attr:`algorithm`, its old value must be added to this set. The algorithm specified in
+        :attr:`algorithm` does not have to be part of this set.
     """
 
     _instance_var_payload_field_mapping: bidict.bidict = bidict.bidict(
@@ -59,12 +57,18 @@ class EasyJWT(object):
         instance variable.
     """
 
+    # TODO: Use a set.
     _private_payload_fields: typing.List[str] = [
         '_easyjwt_class',
     ]
     """
         List of instance variable names that are part of the payload although their names begin with an underscore.
     """
+
+    _public_non_payload_fields: typing.Set[str] = {
+        'algorithm',
+        'previous_algorithms',
+    }
 
     def __init__(self, key: str) -> None:
         """
@@ -129,7 +133,7 @@ class EasyJWT(object):
 
         # Encode the object.
         payload = self._get_payload()
-        token_bytes = jwt.encode(payload, self._key, algorithm=self._algorithm.value)
+        token_bytes = jwt.encode(payload, self._key, algorithm=self.algorithm.value)
 
         # The encoded payload is a bytestream. Create a UTF-8 string.
         token = token_bytes.decode('utf-8')
@@ -227,8 +231,8 @@ class EasyJWT(object):
             :return: A set of all algorithms ever used for encoding the tokens.
         """
 
-        algorithms = {algorithm.value for algorithm in cls._previous_algorithms}
-        algorithms.add(cls._algorithm.value)
+        algorithms = {algorithm.value for algorithm in cls.previous_algorithms}
+        algorithms.add(cls.algorithm.value)
         return algorithms
 
     @classmethod
@@ -239,7 +243,8 @@ class EasyJWT(object):
             An instance variable will be considered to be a part of the payload if:
 
             * it is listed in :attr:`_private_payload_fields`, or
-            * it does not start with an underscore.
+            * it does not start with an underscore, but
+                * is not listed in :attr:`_public_non_payload_fields'.
 
             :param instance_var: The name of the instance variable to check.
             :return: ``True`` if the instance variable is part of the payload, ``False`` otherwise.
@@ -249,7 +254,15 @@ class EasyJWT(object):
         if instance_var in cls._private_payload_fields:
             return True
 
-        return not instance_var.startswith('_')
+        # Private instance variables are never included (unless explicitly allowed above).
+        if instance_var.startswith('_'):
+            return False
+
+        # Public instance variables might not be a payload field.
+        if instance_var in cls._public_non_payload_fields:
+            return False
+
+        return True
 
     @classmethod
     def _map_instance_var_to_payload_field(cls, instance_var: str) -> str:
