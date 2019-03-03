@@ -28,7 +28,9 @@ class EasyJWT(object):
         token).
     """
 
-    algorithm: Algorithm = Algorithm.HS256
+    # region Class Variables
+
+    algorithm: typing.ClassVar[Algorithm] = Algorithm.HS256
     """
         The algorithm used for encoding the token.
 
@@ -36,7 +38,7 @@ class EasyJWT(object):
         still be decoded properly.
     """
 
-    previous_algorithms: typing.Set[Algorithm] = {}
+    previous_algorithms: typing.ClassVar[typing.Set[Algorithm]] = {}
     """
         All algorithms that have previously been used for encoding the token, needed for decoding the token.
 
@@ -44,7 +46,7 @@ class EasyJWT(object):
         :attr:`algorithm` does not have to be part of this set.
     """
 
-    _instance_var_payload_field_mapping: bidict.bidict = bidict.bidict(
+    _instance_var_payload_field_mapping: typing.ClassVar[bidict.bidict] = bidict.bidict(
         expiration_date='exp',
     )
     """
@@ -59,14 +61,14 @@ class EasyJWT(object):
         instance variable.
     """
 
-    _private_payload_fields: typing.Set[str] = {
+    _private_payload_fields: typing.ClassVar[typing.Set[str]] = {
         '_easyjwt_class',
     }
     """
         Set of instance variable names that are part of the payload although their names begin with an underscore.
     """
 
-    _public_non_payload_fields: typing.Set[str] = {
+    _public_non_payload_fields: typing.ClassVar[typing.Set[str]] = {
         'algorithm',
         'previous_algorithms',
     }
@@ -75,27 +77,37 @@ class EasyJWT(object):
         underscore.
     """
 
+    # endregion
+
+    # region Instance Variables
+
+    expiration_date: typing.Optional[datetime.datetime]
+    """
+        The date and time at which this token will expire.
+    """
+
+    _easyjwt_class: str
+    """
+        The name of the class creating the token.
+
+        Used for validating a token.
+    """
+
+    _key: str
+    """
+        The private key for encoding and decoding the token.
+    """
+
+    # endregion
+
     def __init__(self, key: str) -> None:
         """
             :param key: The private key that is used for encoding and decoding the token.
         """
 
-        self._easyjwt_class: str = self._get_class_name()
-        """
-            The name of the class creating the token.
-
-            Used for validating a token.
-        """
-
-        self.expiration_date: typing.Optional[datetime.datetime] = None
-        """
-            The date and time at which this token will expire.
-        """
-
-        self._key: str = key
-        """
-            The private key for encoding and decoding the token.
-        """
+        self._easyjwt_class = self._get_class_name()
+        self.expiration_date = None
+        self._key = key
 
     @classmethod
     def verify(cls, token: str, key: str) -> 'EasyJWT':
