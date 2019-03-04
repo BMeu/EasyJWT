@@ -61,6 +61,16 @@ class EasyJWT(object):
         instance variable.
     """
 
+    _optional_payload_fields: typing.ClassVar[typing.Set[str]] = {
+        'exp',
+    }
+    """
+        Set of payload fields that are optional, i.e. that can be empty in the token's payload without causing an error.
+
+        Note that the name of the _payload field_ must be given, not the name of the _instance variable_ (see
+        :attr:`_instance_var_payload_field_mapping`).
+    """
+
     _private_payload_fields: typing.ClassVar[typing.Set[str]] = {
         '_easyjwt_class',
     }
@@ -84,6 +94,8 @@ class EasyJWT(object):
     expiration_date: typing.Optional[datetime.datetime]
     """
         The date and time at which this token will expire.
+        
+        Must be given in UTC.
     """
 
     _easyjwt_class: str
@@ -100,14 +112,57 @@ class EasyJWT(object):
 
     # endregion
 
+    # region Instantiation
+
     def __init__(self, key: str) -> None:
         """
             :param key: The private key that is used for encoding and decoding the token.
         """
 
         self._easyjwt_class = self._get_class_name()
-        self.expiration_date = None
         self._key = key
+
+        self.expiration_date = None
+
+    # endregion
+
+    # region Token Creation
+
+    def create(self) -> str:
+        """
+            Create the actual token from the :class:`EasyJWT` object.
+
+            :return: The token represented by the current state of the object.
+        """
+
+        # Encode the object.
+        payload = self._get_payload()
+        token_bytes = jwt.encode(payload, self._key, algorithm=self.algorithm.value)
+
+        # The encoded payload is a bytestream. Create a UTF-8 string.
+        token = token_bytes.decode('utf-8')
+        return token
+
+    def _get_payload(self, with_empty_fields: bool = False) -> typing.Dict[str, typing.Any]:
+        """
+            Get the payload of this token.
+
+            :param with_empty_fields: If set to `True`, fields that have no value will be included.
+            :return: A dictionary of instance variables with their current values that make up the token's payload.
+                     Instance variable names are mapped to their respective payload field names. Fields that have no
+                     value are excluded.
+        """
+
+        # TODO: Fail if a non-optional field is empty.
+
+        return {EasyJWT._map_instance_var_to_payload_field(field): value
+                for (field, value) in vars(self).items()
+                if self._is_payload_field(field) and (with_empty_fields or value is not None)
+                }
+
+    # endregion
+
+    # region Token Restoration
 
     @classmethod
     def verify(cls, token: str, key: str) -> 'EasyJWT':
@@ -136,29 +191,17 @@ class EasyJWT(object):
 
         return easyjwt
 
-    def create(self) -> str:
+    @classmethod
+    def _get_decode_algorithms(cls) -> typing.Set[str]:
         """
-            Create the actual token from the :class:`EasyJWT` object.
+            Get all algorithms for decoding.
 
-            :return: The token represented by the current state of the object.
-        """
-
-        # Encode the object.
-        payload = self._get_payload()
-        token_bytes = jwt.encode(payload, self._key, algorithm=self.algorithm.value)
-
-        # The encoded payload is a bytestream. Create a UTF-8 string.
-        token = token_bytes.decode('utf-8')
-        return token
-
-    def _get_class_name(self) -> str:
-        """
-            Get the class of the own object.
-
-            :return: The name of the class of which ``self`` is.
+            :return: A set of all algorithms ever used for encoding the tokens.
         """
 
-        return type(self).__name__
+        algorithms = {algorithm.value for algorithm in cls.previous_algorithms}
+        algorithms.add(cls.algorithm.value)
+        return algorithms
 
     def _get_payload_fields(self) -> typing.Set[str]:
         """
@@ -167,17 +210,22 @@ class EasyJWT(object):
             :return: A set of names of the instance variables that make up the payload fields.
         """
 
-        return set(self._get_payload().keys())
+        return set(self._get_payload(with_empty_fields=True).keys())
 
-    def _get_payload(self) -> typing.Dict[str, typing.Any]:
+    @classmethod
+    def _get_restore_method_for_payload_field(cls, field: str) -> typing.Optional[typing.Callable[[typing.Any],
+                                                                                                  typing.Any]]:
         """
-            Get the payload of this token.
+            Get the method for the given payload field that restores the field's value to the expected format.
 
-            :return: A dictionary of instance variables with their current values that make up the token's payload.
+            :param field: The payload field for which the restore method will be returned.
+            :return: The method for the given field if it exists. `None` if there is no such method.
         """
+        method_name = f'_restore_payload_field_{field}'
+        if hasattr(cls, method_name) and callable(getattr(cls, method_name)):
+            return getattr(cls, method_name)
 
-        return {EasyJWT._map_instance_var_to_payload_field(field): value
-                for (field, value) in vars(self).items() if self._is_payload_field(field)}
+        return None
 
     def _restore_payload(self, payload: typing.Dict[str, typing.Any]) -> None:
         """
@@ -194,11 +242,21 @@ class EasyJWT(object):
 
             # Restore the value (if necessary).
             restore_method = self._get_restore_method_for_payload_field(field)
-            if restore_method is not None:
+            if restore_method is not None and value is not None:
                 value = restore_method(value)
 
             # Actually set the value.
             setattr(self, field, value)
+
+    @staticmethod
+    def _restore_payload_field_expiration_date(payload_value: int) -> datetime.datetime:
+        """
+            Restore the expiration date to a `datetime` object.
+
+            :param payload_value: The expiration date as number of seconds since the epoch.
+            :return: The corresponding `datetime object.`
+        """
+        return datetime.datetime.utcfromtimestamp(payload_value)
 
     def _verify_payload(self, payload: typing.Dict[str, typing.Any]) -> bool:
         """
@@ -232,7 +290,7 @@ class EasyJWT(object):
         # Use the name of the instance variable for missing payload fields to avoid confusion.
         # For unexpected fields, use the name of the payload field.
         missing_fields = {self._map_payload_field_to_instance_var(field) for field
-                          in expected_fields.difference(actual_fields)}
+                          in expected_fields.difference(actual_fields) if not self._is_optional_payload_field(field)}
         unexpected_fields = actual_fields.difference(expected_fields)
 
         # If there are no missing fields or unexpected fields, everything is fine.
@@ -242,32 +300,21 @@ class EasyJWT(object):
         # Otherwise, raise an exception.
         raise PayloadFieldError(missing_fields, unexpected_fields)
 
-    @classmethod
-    def _get_decode_algorithms(cls) -> typing.Set[str]:
-        """
-            Get all algorithms for decoding.
+    # endregion
 
-            :return: A set of all algorithms ever used for encoding the tokens.
-        """
-
-        algorithms = {algorithm.value for algorithm in cls.previous_algorithms}
-        algorithms.add(cls.algorithm.value)
-        return algorithms
+    # region Instance Variable and Payload Field Helpers
 
     @classmethod
-    def _get_restore_method_for_payload_field(cls, field: str) -> typing.Optional[typing.Callable[[typing.Any],
-                                                                                                  typing.Any]]:
+    def _is_optional_payload_field(cls, field: str) -> bool:
         """
-            Get the method for the given payload field that restores the field's value to the expected format.
+            Determine if the given payload is optional and may thus be empty in the payload.
 
-            :param field: The payload field for which the restore method will be returned.
-            :return: The method for the given field if it exists. `None` if there is no such method.
+            A payload field is optional if it is listed in :attr:`_optional_payload_fields`.
+
+            :param field: The name of the payload field to check.
+            :return: `True` if the given payload field is optional, `False` otherwise.
         """
-        method_name = f'_restore_payload_field_{field}'
-        if hasattr(cls, method_name) and callable(getattr(cls, method_name)):
-            return getattr(cls, method_name)
-
-        return None
+        return field in cls._optional_payload_fields
 
     @classmethod
     def _is_payload_field(cls, instance_var: str) -> bool:
@@ -281,7 +328,7 @@ class EasyJWT(object):
                 * is not listed in :attr:`_public_non_payload_fields'.
 
             :param instance_var: The name of the instance variable to check.
-            :return: ``True`` if the instance variable is part of the payload, ``False`` otherwise.
+            :return: `True` if the instance variable is part of the payload, `False` otherwise.
         """
 
         # Some instance variables are always included in the payload.
@@ -322,15 +369,22 @@ class EasyJWT(object):
         # If the payload field is not defined in the mapping, return its field name.
         return cls._instance_var_payload_field_mapping.inv.get(payload_field, payload_field)
 
-    @staticmethod
-    def _restore_payload_field_expiration_date(payload_value: int) -> datetime.datetime:
-        """
-            Restore the expiration date to a `datetime` object.
+    # endregion
 
-            :param payload_value: The expiration date as number of seconds since the epoch.
-            :return: The corresponding `datetime object.`
+    # region Other
+
+    def _get_class_name(self) -> str:
         """
-        return datetime.datetime.utcfromtimestamp(payload_value)
+            Get the class of the own object.
+
+            :return: The name of the class of which `self` is.
+        """
+
+        return type(self).__name__
+
+    # endregion
+
+    # region System Methods
 
     def __str__(self):
         """
@@ -342,3 +396,5 @@ class EasyJWT(object):
         """
 
         return self.create()
+
+    # endregion

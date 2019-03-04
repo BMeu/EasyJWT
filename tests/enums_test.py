@@ -3,8 +3,6 @@
 
 from unittest import TestCase
 
-from time import time
-
 from easyjwt import Algorithm
 from easyjwt import EasyJWT
 
@@ -19,7 +17,6 @@ class AlgorithmTest(TestCase):
         """
 
         key = 'abcdefghijklmnopqrstuvwxyz'
-        expiration_date = time() + (15 * 60)
 
         for algorithm in list(Algorithm):
 
@@ -27,7 +24,6 @@ class AlgorithmTest(TestCase):
             EasyJWT.algorithm = algorithm
 
             easyjwt_creation = EasyJWT(key)
-            easyjwt_creation.expiration_date = expiration_date
 
             # Encode the token with the current algorithm.
             token = easyjwt_creation.create()
