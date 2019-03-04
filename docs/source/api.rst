@@ -34,3 +34,12 @@ Errors
 
 .. autoclass:: easyjwt.WrongClassError
     :show-inheritance:
+
+Modules
+-------
+
+restore
+~~~~~~~
+
+.. automodule:: easyjwt.restoration
+    :members:

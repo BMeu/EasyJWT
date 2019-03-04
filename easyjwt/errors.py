@@ -5,7 +5,8 @@
     Error class definitions.
 """
 
-import typing
+from typing import Iterable
+from typing import Optional
 
 
 class EasyJWTError(Exception):
@@ -53,8 +54,8 @@ class PayloadFieldError(InvalidPayloadBaseError):
         unexpected fields.
     """
 
-    def __init__(self, missing_fields: typing.Optional[typing.Iterable[str]] = None,
-                 unexpected_fields: typing.Optional[typing.Iterable[str]] = None) -> None:
+    def __init__(self, missing_fields: Optional[Iterable[str]] = None,
+                 unexpected_fields: Optional[Iterable[str]] = None) -> None:
         """
             :param missing_fields: The names of fields that are expected but are missing in the payload.
             :param unexpected_fields: The names of fields that are given in the payload but are not specified in the

@@ -5,10 +5,10 @@
     Enum definitions.
 """
 
-import enum
+from enum import Enum
 
 
-class Algorithm(enum.Enum):
+class Algorithm(Enum):
     """
         The supported algorithms for cryptographically signing the tokens.
     """

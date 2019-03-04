@@ -5,17 +5,24 @@
     Definitions for handling JSON Web Tokens (JWT).
 """
 
-import typing
+from typing import Any
+from typing import Callable
+from typing import ClassVar
+from typing import Dict
+from typing import Optional
+from typing import Set
 
-import datetime
+from datetime import datetime
 
-import bidict
-import jwt
+from bidict import bidict
+from jwt import decode as jwt_decode
+from jwt import encode as jwt_encode
 
 from . import Algorithm
 from . import MissingClassError
 from . import PayloadFieldError
 from . import WrongClassError
+from .restoration import restore_timestamp_to_datetime
 
 
 class EasyJWT(object):
@@ -30,7 +37,7 @@ class EasyJWT(object):
 
     # region Class Variables
 
-    algorithm: typing.ClassVar[Algorithm] = Algorithm.HS256
+    algorithm: ClassVar[Algorithm] = Algorithm.HS256
     """
         The algorithm used for encoding the token.
 
@@ -38,7 +45,7 @@ class EasyJWT(object):
         still be decoded properly.
     """
 
-    previous_algorithms: typing.ClassVar[typing.Set[Algorithm]] = {}
+    previous_algorithms: ClassVar[Set[Algorithm]] = {}
     """
         All algorithms that have previously been used for encoding the token, needed for decoding the token.
 
@@ -46,7 +53,7 @@ class EasyJWT(object):
         :attr:`algorithm` does not have to be part of this set.
     """
 
-    _instance_var_payload_field_mapping: typing.ClassVar[bidict.bidict] = bidict.bidict(
+    _instance_var_payload_field_mapping: ClassVar[bidict] = bidict(
         expiration_date='exp',
     )
     """
@@ -61,7 +68,7 @@ class EasyJWT(object):
         instance variable.
     """
 
-    _optional_payload_fields: typing.ClassVar[typing.Set[str]] = {
+    _optional_payload_fields: ClassVar[Set[str]] = {
         'exp',
     }
     """
@@ -71,14 +78,25 @@ class EasyJWT(object):
         :attr:`_instance_var_payload_field_mapping`).
     """
 
-    _private_payload_fields: typing.ClassVar[typing.Set[str]] = {
+    _payload_field_restore_methods: ClassVar[Dict[str, Callable[[Optional[Any]], Optional[Any]]]] = dict(
+        expiration_date=restore_timestamp_to_datetime,
+    )
+    """
+        A dictionary mapping a payload field to a method that will restore its value from the payload into the expected
+        format of the object.
+
+        Note that the name of the _instance variable_ must be given as the key, not the name of the _payload field_ (see
+        :attr:`_instance_var_payload_field_mapping`).
+    """
+
+    _private_payload_fields: ClassVar[Set[str]] = {
         '_easyjwt_class',
     }
     """
         Set of instance variable names that are part of the payload although their names begin with an underscore.
     """
 
-    _public_non_payload_fields: typing.ClassVar[typing.Set[str]] = {
+    _public_non_payload_fields: ClassVar[Set[str]] = {
         'algorithm',
         'previous_algorithms',
     }
@@ -91,7 +109,7 @@ class EasyJWT(object):
 
     # region Instance Variables
 
-    expiration_date: typing.Optional[datetime.datetime]
+    expiration_date: Optional[datetime]
     """
         The date and time at which this token will expire.
 
@@ -137,13 +155,13 @@ class EasyJWT(object):
 
         # Encode the object.
         payload = self._get_payload()
-        token_bytes = jwt.encode(payload, self._key, algorithm=self.algorithm.value)
+        token_bytes = jwt_encode(payload, self._key, algorithm=self.algorithm.value)
 
         # The encoded payload is a bytestream. Create a UTF-8 string.
         token = token_bytes.decode('utf-8')
         return token
 
-    def _get_payload(self, with_empty_fields: bool = False) -> typing.Dict[str, typing.Any]:
+    def _get_payload(self, with_empty_fields: bool = False) -> Dict[str, Any]:
         """
             Get the payload of this token.
 
@@ -183,7 +201,7 @@ class EasyJWT(object):
 
         # Decode the given token.
         algorithms = easyjwt._get_decode_algorithms()
-        payload = jwt.decode(token, easyjwt._key, algorithms=algorithms)
+        payload = jwt_decode(token, easyjwt._key, algorithms=algorithms)
 
         # Verify and restore the token.
         easyjwt._verify_payload(payload)
@@ -192,7 +210,7 @@ class EasyJWT(object):
         return easyjwt
 
     @classmethod
-    def _get_decode_algorithms(cls) -> typing.Set[str]:
+    def _get_decode_algorithms(cls) -> Set[str]:
         """
             Get all algorithms for decoding.
 
@@ -203,7 +221,7 @@ class EasyJWT(object):
         algorithms.add(cls.algorithm.value)
         return algorithms
 
-    def _get_payload_fields(self) -> typing.Set[str]:
+    def _get_payload_fields(self) -> Set[str]:
         """
             Get all fields that are part of the payload.
 
@@ -213,21 +231,16 @@ class EasyJWT(object):
         return set(self._get_payload(with_empty_fields=True).keys())
 
     @classmethod
-    def _get_restore_method_for_payload_field(cls, field: str) -> typing.Optional[typing.Callable[[typing.Any],
-                                                                                                  typing.Any]]:
+    def _get_restore_method_for_payload_field(cls, field: str) -> Optional[Callable[[Optional[Any]], Optional[Any]]]:
         """
             Get the method for the given payload field that restores the field's value to the expected format.
 
             :param field: The payload field for which the restore method will be returned.
             :return: The method for the given field if it exists. `None` if there is no such method.
         """
-        method_name = f'_restore_payload_field_{field}'
-        if hasattr(cls, method_name) and callable(getattr(cls, method_name)):
-            return getattr(cls, method_name)
+        return cls._payload_field_restore_methods.get(field, None)
 
-        return None
-
-    def _restore_payload(self, payload: typing.Dict[str, typing.Any]) -> None:
+    def _restore_payload(self, payload: Dict[str, Any]) -> None:
         """
             Restore the token data from the given payload.
 
@@ -248,17 +261,7 @@ class EasyJWT(object):
             # Actually set the value.
             setattr(self, field, value)
 
-    @staticmethod
-    def _restore_payload_field_expiration_date(payload_value: int) -> datetime.datetime:
-        """
-            Restore the expiration date to a `datetime` object.
-
-            :param payload_value: The expiration date as number of seconds since the epoch.
-            :return: The corresponding `datetime object.`
-        """
-        return datetime.datetime.utcfromtimestamp(payload_value)
-
-    def _verify_payload(self, payload: typing.Dict[str, typing.Any]) -> bool:
+    def _verify_payload(self, payload: Dict[str, Any]) -> bool:
         """
             Verify that the payload contains exactly the expected fields, that is, expected fields must not be missing
             from the payload and the payload must not contain any additional fields. Furthermore, verify that this

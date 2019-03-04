@@ -15,6 +15,7 @@ from easyjwt import EasyJWT
 from easyjwt import MissingClassError
 from easyjwt import PayloadFieldError
 from easyjwt import WrongClassError
+from easyjwt.restoration import restore_timestamp_to_datetime
 
 
 class EasyJWTTest(TestCase):
@@ -252,7 +253,7 @@ class EasyJWTTest(TestCase):
             Expected Result: The method `_restore_payload_field_expiration_date()` is returned.
         """
         restore_method = EasyJWT._get_restore_method_for_payload_field('expiration_date')
-        self.assertEqual(EasyJWT._restore_payload_field_expiration_date, restore_method)
+        self.assertEqual(restore_timestamp_to_datetime, restore_method)
 
     def test_get_restore_method_for_payload_field_none(self):
         """
@@ -295,18 +296,6 @@ class EasyJWTTest(TestCase):
         easyjwt = EasyJWT(self.key)
         easyjwt._restore_payload(payload)
         self.assertIsNone(easyjwt.expiration_date)
-
-    # _restore_payload_field_expiration_date()
-    # ========================================
-
-    def test_restore_payload_field_expiration_date(self):
-        """
-            Test restoring the expiration date.
-
-            Expected Result: The correct `datetime` object is returned.
-        """
-        timestamp = int(self.expiration_date.replace(tzinfo=timezone.utc).timestamp())
-        self.assertEqual(self.expiration_date, EasyJWT._restore_payload_field_expiration_date(timestamp))
 
     # _verify_payload()
     # =================
