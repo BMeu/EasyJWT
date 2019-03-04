@@ -55,6 +55,7 @@ class EasyJWT(object):
 
     _instance_var_payload_field_mapping: ClassVar[bidict] = bidict(
         expiration_date='exp',
+        issued_at_date='iat',
         not_before_date='nbf',
     )
     """
@@ -71,6 +72,7 @@ class EasyJWT(object):
 
     _optional_payload_fields: ClassVar[Set[str]] = {
         'exp',
+        'iat',
         'nbf',
     }
     """
@@ -82,6 +84,7 @@ class EasyJWT(object):
 
     _payload_field_restore_methods: ClassVar[Dict[str, Callable[[Optional[Any]], Optional[Any]]]] = dict(
         expiration_date=restore_timestamp_to_datetime,
+        issued_at_date=restore_timestamp_to_datetime,
         not_before_date=restore_timestamp_to_datetime,
     )
     """
@@ -112,17 +115,38 @@ class EasyJWT(object):
 
     # region Instance Variables
 
+    # TODO: Mention the exception that will be raised if the verification fails.
     expiration_date: Optional[datetime]
     """
         The date and time at which this token will expire.
 
+        If this field is included in a token and this token is verified after the date has passed, the verification
+        will fail.
+
         Must be given in UTC.
     """
 
+    issued_at_date: Optional[datetime]
+    """
+        The date and time at which the token has been created.
+
+        This field will automatically be set in :meth:`.create`. See that method on how to overwrite the value.
+
+        When initializing a new object, this field will be `None`. With each creation, it will be updated accordingly.
+        When verifying a token and restoring the object, this field will be set to the value given in the token (if it
+        is included).
+
+        Will be given in UTC.
+    """
+
+    # TODO: Mention the exception that will be raised if the verification fails.
     not_before_date: Optional[datetime]
     """
         The date and time before which this token will not be valid.
-        
+
+        If this field is included in a token and this token is verified before the date has been reached, the
+        verification will fail.
+
         Must be given in UTC.
     """
 
@@ -151,18 +175,26 @@ class EasyJWT(object):
         self._key = key
 
         self.expiration_date = None
+        self.issued_at_date = None
         self.not_before_date = None
 
     # endregion
 
     # region Token Creation
 
-    def create(self) -> str:
+    def create(self, issued_at: Optional[datetime] = None) -> str:
         """
             Create the actual token from the :class:`EasyJWT` object.
 
+            :param issued_at: The date and time at which this token was issued. If not given, the current date and time
+                              will be used. Must be given in UTC. Defaults to `None`.
             :return: The token represented by the current state of the object.
         """
+
+        # Set the issued-at date.
+        self.issued_at_date = issued_at
+        if self.issued_at_date is None:
+            self.issued_at_date = datetime.utcnow()
 
         # Encode the object.
         payload = self._get_payload()

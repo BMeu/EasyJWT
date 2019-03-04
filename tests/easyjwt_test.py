@@ -32,7 +32,8 @@ class EasyJWTTest(TestCase):
 
         # Do not use microseconds.
         self.expiration_date = datetime.utcnow().replace(microsecond=0) + timedelta(minutes=15)
-        self.not_before_date = datetime.utcnow().replace(microsecond=0)
+        self.issued_at_date = datetime.utcnow().replace(microsecond=0) + timedelta(minutes=1)
+        self.not_before_date = datetime.utcnow().replace(microsecond=0) - timedelta(minutes=5)
 
     # endregion
 
@@ -54,6 +55,7 @@ class EasyJWTTest(TestCase):
         self.assertEqual(self.key, easyjwt._key)
 
         self.assertIsNone(easyjwt.expiration_date)
+        self.assertIsNone(easyjwt.issued_at_date)
         self.assertIsNone(easyjwt.not_before_date)
 
     # endregion
@@ -63,9 +65,27 @@ class EasyJWTTest(TestCase):
     # create()
     # ========
 
-    def test_create(self):
+    def test_create_with_issued_at_date(self):
         """
-             Test creating a token.
+             Test creating a token with specifying an issued-at date.
+
+             Expected Result: A token is created. The created token can be decoded.
+        """
+        easyjwt = EasyJWT(self.key)
+        easyjwt.expiration_date = self.expiration_date
+        easyjwt.not_before_date = self.not_before_date
+
+        token = easyjwt.create(self.issued_at_date)
+        self.assertIsNotNone(token)
+
+        self.assertEqual(self.issued_at_date, easyjwt.issued_at_date)
+
+        payload = decode(token, self.key, algorithms=easyjwt._get_decode_algorithms())
+        self.assertIsNotNone(payload)
+
+    def test_create_without_issued_at_date(self):
+        """
+             Test creating a token without specifying an issued-at date.
 
              Expected Result: A token is created. The created token can be decoded.
         """
@@ -75,6 +95,8 @@ class EasyJWTTest(TestCase):
 
         token = easyjwt.create()
         self.assertIsNotNone(token)
+
+        self.assertIsNotNone(easyjwt.issued_at_date)
 
         payload = decode(token, self.key, algorithms=easyjwt._get_decode_algorithms())
         self.assertIsNotNone(payload)
@@ -91,10 +113,12 @@ class EasyJWTTest(TestCase):
         payload = dict(
             _easyjwt_class='EasyJWT',
             exp=self.expiration_date,
+            iat=self.issued_at_date,
             nbf=self.not_before_date,
         )
         easyjwt = EasyJWT(self.key)
         easyjwt.expiration_date = self.expiration_date
+        easyjwt.issued_at_date = self.issued_at_date
         easyjwt.not_before_date = self.not_before_date
 
         self.assertDictEqual(payload, easyjwt._get_payload())
@@ -120,6 +144,7 @@ class EasyJWTTest(TestCase):
         payload = dict(
             _easyjwt_class='EasyJWT',
             exp=None,
+            iat=None,
             nbf=None,
         )
         easyjwt = EasyJWT(self.key)
@@ -252,7 +277,7 @@ class EasyJWTTest(TestCase):
 
             Expected Result: A set with the field for the EasyJWT class and all claims is returned.
         """
-        payload_fields = {'_easyjwt_class', 'exp', 'nbf'}
+        payload_fields = {'_easyjwt_class', 'exp', 'iat', 'nbf'}
         easyjwt = EasyJWT(self.key)
         self.assertSetEqual(payload_fields, easyjwt._get_payload_fields())
 
@@ -280,13 +305,13 @@ class EasyJWTTest(TestCase):
         restore_method = EasyJWT._get_restore_method_for_payload_field('expiration_date')
         self.assertEqual(restore_timestamp_to_datetime, restore_method)
 
-    def test_get_restore_method_for_payload_field_not_before_date(self):
+    def test_get_restore_method_for_payload_field_issued_at_date(self):
         """
-            Test getting the restore method for the not-before date.
+            Test getting the restore method for the issued-at date.
 
             Expected Result: The method `restoration.restore_timestamp_to_datetime()` is returned.
         """
-        restore_method = EasyJWT._get_restore_method_for_payload_field('not_before_date')
+        restore_method = EasyJWT._get_restore_method_for_payload_field('issued_at_date')
         self.assertEqual(restore_timestamp_to_datetime, restore_method)
 
     def test_get_restore_method_for_payload_field_none(self):
@@ -298,6 +323,15 @@ class EasyJWTTest(TestCase):
         restore_method = EasyJWT._get_restore_method_for_payload_field('payload_field_with_no_restore_method')
         self.assertIsNone(restore_method)
 
+    def test_get_restore_method_for_payload_field_not_before_date(self):
+        """
+            Test getting the restore method for the not-before date.
+
+            Expected Result: The method `restoration.restore_timestamp_to_datetime()` is returned.
+        """
+        restore_method = EasyJWT._get_restore_method_for_payload_field('not_before_date')
+        self.assertEqual(restore_timestamp_to_datetime, restore_method)
+
     # _restore_payload()
     # ==================
 
@@ -308,16 +342,19 @@ class EasyJWTTest(TestCase):
             Expected Result: The values in the payload are mapped to their respective instance variables.
         """
         exp_timestamp = int(self.expiration_date.replace(tzinfo=timezone.utc).timestamp())
+        iat_timestamp = int(self.issued_at_date.replace(tzinfo=timezone.utc).timestamp())
         nbf_timestamp = int(self.not_before_date.replace(tzinfo=timezone.utc).timestamp())
         payload = dict(
             _easyjwt_class='EasyJWT',
             exp=exp_timestamp,
+            iat=iat_timestamp,
             nbf=nbf_timestamp,
         )
 
         easyjwt = EasyJWT(self.key)
         easyjwt._restore_payload(payload)
         self.assertEqual(self.expiration_date, easyjwt.expiration_date)
+        self.assertEqual(self.issued_at_date, easyjwt.issued_at_date)
         self.assertEqual(self.not_before_date, easyjwt.not_before_date)
 
     def test_restore_payload_without_optional_fields(self):
@@ -333,6 +370,7 @@ class EasyJWTTest(TestCase):
         easyjwt = EasyJWT(self.key)
         easyjwt._restore_payload(payload)
         self.assertIsNone(easyjwt.expiration_date)
+        self.assertIsNone(easyjwt.issued_at_date)
         self.assertIsNone(easyjwt.not_before_date)
 
     # _verify_payload()
@@ -430,6 +468,7 @@ class EasyJWTTest(TestCase):
         """
         easyjwt = EasyJWT(self.key)
         easyjwt.expiration_date = self.expiration_date
+        easyjwt.issued_at_date = self.issued_at_date
         easyjwt.not_before_date = self.not_before_date
         payload = easyjwt._get_payload()
         self.assertTrue(easyjwt._verify_payload(payload))
@@ -466,6 +505,14 @@ class EasyJWTTest(TestCase):
             Expected Result: `True`
         """
         self.assertTrue(EasyJWT._is_optional_payload_field('exp'))
+
+    def test_is_optional_payload_field_issued_at_date(self):
+        """
+            Test if the payload field for the issued-at date is optional.
+
+            Expected Result: `True`
+        """
+        self.assertTrue(EasyJWT._is_optional_payload_field('iat'))
 
     def test_is_optional_payload_field_non_optional_field(self):
         """
@@ -513,6 +560,14 @@ class EasyJWTTest(TestCase):
             Expected Result: `True`.
         """
         self.assertTrue(EasyJWT._is_payload_field('expiration_date'))
+
+    def test_is_payload_field_issued_at_date(self):
+        """
+            Test if the instance variable for the issued-at date is a payload field.
+
+            Expected Result: `True`.
+        """
+        self.assertTrue(EasyJWT._is_payload_field('issued_at_date'))
 
     def test_is_payload_field_not_before_date(self):
         """
@@ -562,6 +617,14 @@ class EasyJWTTest(TestCase):
         """
         self.assertEqual('exp', EasyJWT._map_instance_var_to_payload_field('expiration_date'))
 
+    def test_map_instance_var_to_payload_field_issued_at_date(self):
+        """
+            Test that the issued-at date is mapped correctly from instance var to payload field.
+
+            Expected Result: The payload field for the issued-at date is returned.
+        """
+        self.assertEqual('iat', EasyJWT._map_instance_var_to_payload_field('issued_at_date'))
+
     def test_map_instance_var_to_payload_field_not_before_date(self):
         """
             Test that the not-before date is mapped correctly from instance var to payload field.
@@ -590,6 +653,14 @@ class EasyJWTTest(TestCase):
             Expected Result: The instance variable for the expiration date is returned.
         """
         self.assertEqual('expiration_date', EasyJWT._map_payload_field_to_instance_var('exp'))
+
+    def test_map_payload_field_to_instance_var_issued_at_date(self):
+        """
+            Test that the issued-at date is mapped correctly from payload field to instance variable.
+
+            Expected Result: The instance variable for the issued-at date is returned.
+        """
+        self.assertEqual('issued_at_date', EasyJWT._map_payload_field_to_instance_var('iat'))
 
     def test_map_payload_field_to_instance_var_not_before_date(self):
         """
