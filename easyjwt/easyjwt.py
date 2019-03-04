@@ -55,6 +55,7 @@ class EasyJWT(object):
 
     _instance_var_payload_field_mapping: ClassVar[bidict] = bidict(
         expiration_date='exp',
+        not_before_date='nbf',
     )
     """
         A bidirectional mapping from the name of an instance variable to its name in the payload (and vice versa).
@@ -70,6 +71,7 @@ class EasyJWT(object):
 
     _optional_payload_fields: ClassVar[Set[str]] = {
         'exp',
+        'nbf',
     }
     """
         Set of payload fields that are optional, i.e. that can be empty in the token's payload without causing an error.
@@ -80,6 +82,7 @@ class EasyJWT(object):
 
     _payload_field_restore_methods: ClassVar[Dict[str, Callable[[Optional[Any]], Optional[Any]]]] = dict(
         expiration_date=restore_timestamp_to_datetime,
+        not_before_date=restore_timestamp_to_datetime,
     )
     """
         A dictionary mapping a payload field to a method that will restore its value from the payload into the expected
@@ -116,6 +119,13 @@ class EasyJWT(object):
         Must be given in UTC.
     """
 
+    not_before_date: Optional[datetime]
+    """
+        The date and time before which this token will not be valid.
+        
+        Must be given in UTC.
+    """
+
     _easyjwt_class: str
     """
         The name of the class creating the token.
@@ -141,6 +151,7 @@ class EasyJWT(object):
         self._key = key
 
         self.expiration_date = None
+        self.not_before_date = None
 
     # endregion
 
