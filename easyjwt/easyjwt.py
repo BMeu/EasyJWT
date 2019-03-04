@@ -94,7 +94,7 @@ class EasyJWT(object):
     expiration_date: typing.Optional[datetime.datetime]
     """
         The date and time at which this token will expire.
-        
+
         Must be given in UTC.
     """
 
