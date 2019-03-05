@@ -4,9 +4,9 @@
 from unittest import TestCase
 
 from easyjwt import EasyJWTError
-from easyjwt import MissingClassError
-from easyjwt import PayloadFieldError
-from easyjwt import WrongClassError
+from easyjwt import UnspecifiedClassError
+from easyjwt import InvalidClaimSetError
+from easyjwt import InvalidClassError
 
 
 class EasyJWTErrorTest(TestCase):
@@ -42,7 +42,7 @@ class MissingClassErrorTest(TestCase):
             Expected result: The message is correctly initialized.
         """
 
-        error = MissingClassError()
+        error = UnspecifiedClassError()
         self.assertEqual('Missing class specification', error._message)
 
 
@@ -52,30 +52,30 @@ class PayloadFieldErrorTest(TestCase):
         """
             Test the initialization of the error.
 
-            Expected result: The message is correctly initialized with the given fields.
+            Expected result: The message is correctly initialized with the given claims.
         """
 
         missing = ['missing_1', 'missing_2']
         unexpected = ['unexpected_1', 'unexpected_2']
 
-        # No missing fields, no unexpected fields.
-        error = PayloadFieldError()
-        message = 'Missing fields: {}. Unexpected fields: {}'
+        # No missing claims, no unexpected claims.
+        error = InvalidClaimSetError()
+        message = 'Missing claims: {}. Unexpected claims: {}'
         self.assertEqual(message, error._message)
 
-        # Missing fields, no unexpected fields.
-        error = PayloadFieldError(missing_fields=missing)
-        message = 'Missing fields: {missing_1, missing_2}. Unexpected fields: {}'
+        # Missing claims, no unexpected claims.
+        error = InvalidClaimSetError(missing_claims=missing)
+        message = 'Missing claims: {missing_1, missing_2}. Unexpected claims: {}'
         self.assertEqual(message, error._message)
 
-        # No missing fields, unexpected fields.
-        error = PayloadFieldError(unexpected_fields=unexpected)
-        message = 'Missing fields: {}. Unexpected fields: {unexpected_1, unexpected_2}'
+        # No missing claims, unexpected claims.
+        error = InvalidClaimSetError(unexpected_claims=unexpected)
+        message = 'Missing claims: {}. Unexpected claims: {unexpected_1, unexpected_2}'
         self.assertEqual(message, error._message)
 
-        # Missing fields, unexpected fields.
-        error = PayloadFieldError(missing_fields=missing, unexpected_fields=unexpected)
-        message = 'Missing fields: {missing_1, missing_2}. Unexpected fields: {unexpected_1, unexpected_2}'
+        # Missing claims, unexpected claims.
+        error = InvalidClaimSetError(missing_claims=missing, unexpected_claims=unexpected)
+        message = 'Missing claims: {missing_1, missing_2}. Unexpected claims: {unexpected_1, unexpected_2}'
         self.assertEqual(message, error._message)
 
 
@@ -90,5 +90,5 @@ class WrongClassErrorTest(TestCase):
 
         expected_class = 'ExpectedEasyJWTClass'
         actual_class = 'ActualEasyJWTClass'
-        error = WrongClassError(expected_class=expected_class, actual_class=actual_class)
+        error = InvalidClassError(expected_class=expected_class, actual_class=actual_class)
         self.assertEqual(f'Expected class {expected_class}. Got class {actual_class}', error._message)

@@ -13,9 +13,9 @@ from jwt import ImmatureSignatureError
 
 from easyjwt import Algorithm
 from easyjwt import EasyJWT
-from easyjwt import MissingClassError
-from easyjwt import PayloadFieldError
-from easyjwt import WrongClassError
+from easyjwt import UnspecifiedClassError
+from easyjwt import InvalidClaimSetError
+from easyjwt import InvalidClassError
 from easyjwt.restoration import restore_timestamp_to_datetime
 
 
@@ -187,7 +187,7 @@ class EasyJWTTest(TestCase):
 
         token = easyjwt_creation.create()
 
-        with self.assertRaises(PayloadFieldError) as exception_cm:
+        with self.assertRaises(InvalidClaimSetError) as exception_cm:
             easyjwt_verification = EasyJWT.verify(token, self.key)
             self.assertIsNone(easyjwt_verification)
             self.assertIn(fake_field, str(exception_cm.exception))
@@ -386,7 +386,7 @@ class EasyJWTTest(TestCase):
         payload = easyjwt._get_payload()
         del payload['_easyjwt_class']
 
-        with self.assertRaises(MissingClassError):
+        with self.assertRaises(UnspecifiedClassError):
             easyjwt._verify_payload(payload)
 
     def test_verify_payload_failure_class_wrong(self):
@@ -399,7 +399,7 @@ class EasyJWTTest(TestCase):
         payload = easyjwt._get_payload()
         payload['_easyjwt_class'] = 'InheritedEasyJWT'
 
-        with self.assertRaises(WrongClassError) as exception_cm:
+        with self.assertRaises(InvalidClassError) as exception_cm:
             easyjwt._verify_payload(payload)
 
         self.assertEqual('Expected class EasyJWT. Got class InheritedEasyJWT', str(exception_cm.exception))
@@ -419,10 +419,10 @@ class EasyJWTTest(TestCase):
         payload = easyjwt._get_payload()
         del payload['email']
 
-        with self.assertRaises(PayloadFieldError) as exception_cm:
+        with self.assertRaises(InvalidClaimSetError) as exception_cm:
             easyjwt._verify_payload(payload)
 
-        self.assertEqual('Missing fields: {email}. Unexpected fields: {}', str(exception_cm.exception))
+        self.assertEqual('Missing claims: {email}. Unexpected claims: {}', str(exception_cm.exception))
 
     def test_verify_payload_failure_fields_unexpected(self):
         """
@@ -434,10 +434,10 @@ class EasyJWTTest(TestCase):
         payload = easyjwt._get_payload()
         payload['user_id'] = 1
 
-        with self.assertRaises(PayloadFieldError) as exception_cm:
+        with self.assertRaises(InvalidClaimSetError) as exception_cm:
             easyjwt._verify_payload(payload)
 
-        self.assertEqual('Missing fields: {}. Unexpected fields: {user_id}', str(exception_cm.exception))
+        self.assertEqual('Missing claims: {}. Unexpected claims: {user_id}', str(exception_cm.exception))
 
     def test_verify_payload_failure_fields_unexpected_and_missing(self):
         """
@@ -455,10 +455,10 @@ class EasyJWTTest(TestCase):
         del payload['email']
         payload['user_id'] = 1
 
-        with self.assertRaises(PayloadFieldError) as exception_cm:
+        with self.assertRaises(InvalidClaimSetError) as exception_cm:
             easyjwt._verify_payload(payload)
 
-        self.assertEqual('Missing fields: {email}. Unexpected fields: {user_id}', str(exception_cm.exception))
+        self.assertEqual('Missing claims: {email}. Unexpected claims: {user_id}', str(exception_cm.exception))
 
     def test_verify_payload_success_with_optional_fields(self):
         """

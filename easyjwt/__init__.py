@@ -7,19 +7,23 @@
 # TODO: Improve package documentation.
 
 from .enums import Algorithm
+from .errors import CreationError
 from .errors import EasyJWTError
-from .errors import InvalidPayloadBaseError
-from .errors import MissingClassError
-from .errors import PayloadFieldError
-from .errors import WrongClassError
+from .errors import InvalidClaimsBaseError
+from .errors import InvalidClaimSetError
+from .errors import InvalidClassError
+from .errors import UnspecifiedClassError
+from .errors import VerificationError
 from .easyjwt import EasyJWT
 
 __all__ = [
     'Algorithm',
+    'CreationError',
     'EasyJWT',
     'EasyJWTError',
-    'InvalidPayloadBaseError',
-    'MissingClassError',
-    'PayloadFieldError',
-    'WrongClassError',
+    'InvalidClaimsBaseError',
+    'InvalidClaimSetError',
+    'InvalidClassError',
+    'UnspecifiedClassError',
+    'VerificationError',
 ]

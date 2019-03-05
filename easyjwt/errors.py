@@ -8,6 +8,8 @@
 from typing import Iterable
 from typing import Optional
 
+# region Base Error
+
 
 class EasyJWTError(Exception):
     """
@@ -29,52 +31,67 @@ class EasyJWTError(Exception):
         """
         return self._message
 
+# endregion
 
-class InvalidPayloadBaseError(EasyJWTError):
-    """
-        A base class for all errors raised if a token's payload is invalid.
-    """
+# region Creation Error
 
+
+class CreationError(EasyJWTError):
+    """
+        A base class for all errors raised during the creation of a token.
+    """
+    pass
+
+# endregion
+
+# region Verification Error
+
+
+class VerificationError(EasyJWTError):
+    """
+        A base class for all errors raised during the verification of a token.
+    """
+    pass
+
+# region Invalid Claims
+
+
+class InvalidClaimsBaseError(VerificationError):
+    """
+        A base class for all errors raised if the claims in a token are invalid.
+    """
     pass
 
 
-class MissingClassError(InvalidPayloadBaseError):
+class InvalidClaimSetError(InvalidClaimsBaseError):
     """
-        Raised if the verification of a token fails because the :class:`EasyJWT` class with which it has been created is
-        not specified in the payload.
-    """
-
-    def __init__(self) -> None:
-        super().__init__('Missing class specification')
-
-
-class PayloadFieldError(InvalidPayloadBaseError):
-    """
-        Raised if the verification of a token fails because it misses some expected fields or it contains some
-        unexpected fields.
+        Raised if the verification of a token fails because the claim set is invalid due to missing or unexpected
+        claims.
     """
 
-    def __init__(self, missing_fields: Optional[Iterable[str]] = None,
-                 unexpected_fields: Optional[Iterable[str]] = None) -> None:
+    def __init__(self,
+                 missing_claims: Optional[Iterable[str]] = None,
+                 unexpected_claims: Optional[Iterable[str]] = None
+                 ) -> None:
         """
-            :param missing_fields: The names of fields that are expected but are missing in the payload.
-            :param unexpected_fields: The names of fields that are given in the payload but are not specified in the
+            :param missing_claims: The names of claims that are expected but missing in the claim set.
+            :param unexpected_claims: The names of claims that are given in the claim set but are not specified in the
                                       class.
         """
 
-        if missing_fields is None:
-            missing_fields = set()
+        if missing_claims is None:
+            missing_claims = set()
 
-        if unexpected_fields is None:
-            unexpected_fields = set()
+        if unexpected_claims is None:
+            unexpected_claims = set()
 
-        missing = '{' + ', '.join(missing_fields) + '}'
-        unexpected = '{' + ', '.join(unexpected_fields) + '}'
+        missing = '{' + ', '.join(missing_claims) + '}'
+        unexpected = '{' + ', '.join(unexpected_claims) + '}'
 
-        super().__init__(f'Missing fields: {missing}. Unexpected fields: {unexpected}')
+        super().__init__(f'Missing claims: {missing}. Unexpected claims: {unexpected}')
 
 
-class WrongClassError(InvalidPayloadBaseError):
+class InvalidClassError(InvalidClaimsBaseError):
     """
         Raised if the verification of a token fails because the :class:`EasyJWT` class with which it has been created is
         not the one with which it is being verified.
@@ -87,3 +104,18 @@ class WrongClassError(InvalidPayloadBaseError):
         """
 
         super().__init__(f'Expected class {expected_class}. Got class {actual_class}')
+
+
+class UnspecifiedClassError(InvalidClaimsBaseError):
+    """
+        Raised if the verification of a token fails because the :class:`EasyJWT` class with which it has been created is
+        not specified in the payload.
+    """
+
+    def __init__(self) -> None:
+        super().__init__('Missing class specification')
+
+
+# endregion
+
+# endregion

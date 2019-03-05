@@ -23,16 +23,22 @@ Errors
 .. autoclass:: easyjwt.EasyJWTError
     :show-inheritance:
 
-.. autoclass:: easyjwt.InvalidPayloadBaseError
+.. autoclass:: easyjwt.CreationError
     :show-inheritance:
 
-.. autoclass:: easyjwt.MissingClassError
+.. autoclass:: easyjwt.VerificationError
     :show-inheritance:
 
-.. autoclass:: easyjwt.PayloadFieldError
+.. autoclass:: easyjwt.InvalidClaimsBaseError
     :show-inheritance:
 
-.. autoclass:: easyjwt.WrongClassError
+.. autoclass:: easyjwt.InvalidClaimSetError
+    :show-inheritance:
+
+.. autoclass:: easyjwt.InvalidClassError
+    :show-inheritance:
+
+.. autoclass:: easyjwt.UnspecifiedClassError
     :show-inheritance:
 
 Modules

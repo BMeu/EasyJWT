@@ -19,9 +19,9 @@ from jwt import decode as jwt_decode
 from jwt import encode as jwt_encode
 
 from . import Algorithm
-from . import MissingClassError
-from . import PayloadFieldError
-from . import WrongClassError
+from . import UnspecifiedClassError
+from . import InvalidClaimSetError
+from . import InvalidClassError
 from .restoration import restore_timestamp_to_datetime
 
 
@@ -235,7 +235,7 @@ class EasyJWT(object):
                         created.
             :return: The object representing the token. The payload values are set on the corresponding instance
                      variables.
-            :raise InvalidPayloadError: If the given token's payload is invalid.
+            :raise InvalidClaimsBaseError: If the given token's payload is invalid.
         """
         # TODO: List all errors in the docstring.
 
@@ -314,19 +314,19 @@ class EasyJWT(object):
 
             :param payload: The payload to verify.
             :return: ``True`` if the payload contains all expected fields and is of this class, ``False`` otherwise.
-            :raise MissingClassError: If the payload does not contain the class with which the token has been created.
-            :raise PayloadFieldError: If the payload does not contain exactly the expected fields.
-            :raise WrongClassError: If the payload is not verified with the class with which the token has been created.
+            :raise UnspecifiedClassError: If the payload does not contain the class with which the token has been created.
+            :raise InvalidClaimSetError: If the payload does not contain exactly the expected fields.
+            :raise InvalidClassError: If the payload is not verified with the class with which the token has been created.
         """
 
         # Check the token's class: it must be specified and be this class.
         class_name = self._get_class_name()
         payload_class_name = payload.get('_easyjwt_class', None)
         if payload_class_name is None:
-            raise MissingClassError()
+            raise UnspecifiedClassError()
 
         if payload_class_name != class_name:
-            raise WrongClassError(expected_class=class_name, actual_class=payload_class_name)
+            raise InvalidClassError(expected_class=class_name, actual_class=payload_class_name)
 
         # Determine missing and unexpected fields. Missing fields are those specified in this class but not given in the
         # payload. Unexpected fields are those given in the payload but not specified in this class.
@@ -344,7 +344,7 @@ class EasyJWT(object):
             return True
 
         # Otherwise, raise an exception.
-        raise PayloadFieldError(missing_fields, unexpected_fields)
+        raise InvalidClaimSetError(missing_fields, unexpected_fields)
 
     # endregion
 
