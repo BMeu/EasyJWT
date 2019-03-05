@@ -80,8 +80,8 @@ class EasyJWTTest(TestCase):
 
         self.assertEqual(self.issued_at_date, easyjwt.issued_at_date)
 
-        payload = decode(token, self.key, algorithms=easyjwt._get_decode_algorithms())
-        self.assertIsNotNone(payload)
+        claim_set = decode(token, self.key, algorithms=easyjwt._get_decode_algorithms())
+        self.assertIsNotNone(claim_set)
 
     def test_create_without_issued_at_date(self):
         """
@@ -98,19 +98,19 @@ class EasyJWTTest(TestCase):
 
         self.assertIsNotNone(easyjwt.issued_at_date)
 
-        payload = decode(token, self.key, algorithms=easyjwt._get_decode_algorithms())
-        self.assertIsNotNone(payload)
+        claim_set = decode(token, self.key, algorithms=easyjwt._get_decode_algorithms())
+        self.assertIsNotNone(claim_set)
 
-    # _get_payload()
+    # _get_claim_set()
     # ==============
 
-    def test_get_payload_with_optional_fields(self):
+    def test_get_claim_set_with_optional_claims(self):
         """
-            Test getting the payload dictionary with setting optional fields.
+            Test getting the claim set with setting optional claims.
 
-            Expected Result: A dictionary with the entries for the class and the optional fields is returned.
+            Expected Result: A dictionary with the entries for the class and the optional claims is returned.
         """
-        payload = dict(
+        claim_set = dict(
             _easyjwt_class='EasyJWT',
             exp=self.expiration_date,
             iat=self.issued_at_date,
@@ -121,34 +121,34 @@ class EasyJWTTest(TestCase):
         easyjwt.issued_at_date = self.issued_at_date
         easyjwt.not_before_date = self.not_before_date
 
-        self.assertDictEqual(payload, easyjwt._get_payload())
+        self.assertDictEqual(claim_set, easyjwt._get_claim_set())
 
-    def test_get_payload_without_optional_fields_and_without_empty_fields(self):
+    def test_get_claim_set_without_optional_claims_and_without_empty_claims(self):
         """
-            Test getting the payload dictionary without setting optional fields and without getting empty fields.
+            Test getting the claim set without setting optional claims and without getting empty claims.
 
             Expected Result: A dictionary with the entry for the class is returned.
         """
-        payload = dict(
+        claim_set = dict(
             _easyjwt_class='EasyJWT',
         )
         easyjwt = EasyJWT(self.key)
-        self.assertDictEqual(payload, easyjwt._get_payload(with_empty_fields=False))
+        self.assertDictEqual(claim_set, easyjwt._get_claim_set(with_empty_claims=False))
 
-    def test_get_payload_without_optional_fields_but_with_empty_fields(self):
+    def test_get_claim_set_without_optional_claims_but_with_empty_claims(self):
         """
-            Test getting the payload dictionary without setting optional fields but with getting empty fields.
+            Test getting the claim set without setting optional claims but with getting empty claims.
 
-            Expected Result: A dictionary with entries for the class and empty optional fields is returned.
+            Expected Result: A dictionary with entries for the class and empty optional claims is returned.
         """
-        payload = dict(
+        claim_set = dict(
             _easyjwt_class='EasyJWT',
             exp=None,
             iat=None,
             nbf=None,
         )
         easyjwt = EasyJWT(self.key)
-        self.assertDictEqual(payload, easyjwt._get_payload(with_empty_fields=True))
+        self.assertDictEqual(claim_set, easyjwt._get_claim_set(with_empty_claims=True))
 
     # endregion
 
@@ -180,17 +180,17 @@ class EasyJWTTest(TestCase):
         """
         easyjwt_creation = EasyJWT(self.key)
 
-        # Add some payload field to the object that is not part of the class.
-        fake_field = 'part_of_the_payload'
-        easyjwt_creation.part_of_the_payload = True
-        self.assertTrue(easyjwt_creation._is_payload_field(fake_field))
+        # Add some claim to the object that is not part of the class.
+        fake_claim = 'part_of_the_claim_set'
+        easyjwt_creation.part_of_the_claim_set = True
+        self.assertTrue(easyjwt_creation._is_claim(fake_claim))
 
         token = easyjwt_creation.create()
 
         with self.assertRaises(InvalidClaimSetError) as exception_cm:
             easyjwt_verification = EasyJWT.verify(token, self.key)
             self.assertIsNone(easyjwt_verification)
-            self.assertIn(fake_field, str(exception_cm.exception))
+            self.assertIn(fake_claim, str(exception_cm.exception))
 
     def test_verify_failure_not_yet_valid_token(self):
         """
@@ -268,83 +268,83 @@ class EasyJWTTest(TestCase):
         EasyJWT.algorithm = current_alg_temp
         EasyJWT.previous_algorithms = previous_algs_temp
 
-    # _get_payload_fields()
+    # _get_claim_names()
     # =====================
 
-    def test_get_payload_fields(self):
+    def test_get_claim_names(self):
         """
-            Test getting the list of payload fields.
+            Test getting the set of claim names.
 
-            Expected Result: A set with the field for the EasyJWT class and all claims is returned.
+            Expected Result: A set with the claims for the EasyJWT class and all claims returned.
         """
-        payload_fields = {'_easyjwt_class', 'exp', 'iat', 'nbf'}
+        claim_names = {'_easyjwt_class', 'exp', 'iat', 'nbf'}
         easyjwt = EasyJWT(self.key)
-        self.assertSetEqual(payload_fields, easyjwt._get_payload_fields())
+        self.assertSetEqual(claim_names, easyjwt._get_claim_names())
 
-    def test_payload_fields_and_payload_keys_equal(self):
+    def test_claim_names_and_claim_set_keys_equal(self):
         """
-            Assert that the list of payload fields is exactly the same as the list of payload keys (if empty fields are
+            Assert that the set of claim names is exactly the same as the set of claim set keys (if empty claims are
             included).
 
-            Expected Result: The list of payload fields equals the list of payload keys.
+            Expected Result: The set of claim names equals the set of claim set keys.
         """
         easyjwt = EasyJWT(self.key)
-        payload_fields = easyjwt._get_payload_fields()
-        payload = easyjwt._get_payload(with_empty_fields=True)
-        self.assertSetEqual(payload_fields, set(payload.keys()))
+        claim_names = easyjwt._get_claim_names()
+        claim_set = easyjwt._get_claim_set(with_empty_claims=True)
+        self.assertSetEqual(claim_names, set(claim_set.keys()))
 
-    # _get_restore_method_for_payload_field()
+    # _get_restore_method_for_claim()
     # =======================================
 
-    def test_get_restore_method_for_payload_field_expiration_date(self):
+    def test_get_restore_method_for_claim_expiration_date(self):
         """
             Test getting the restore method for the expiration date.
 
             Expected Result: The method `restoration.restore_timestamp_to_datetime()` is returned.
         """
-        restore_method = EasyJWT._get_restore_method_for_payload_field('expiration_date')
+        restore_method = EasyJWT._get_restore_method_for_claim('expiration_date')
         self.assertEqual(restore_timestamp_to_datetime, restore_method)
 
-    def test_get_restore_method_for_payload_field_issued_at_date(self):
+    def test_get_restore_method_for_claim_issued_at_date(self):
         """
             Test getting the restore method for the issued-at date.
 
             Expected Result: The method `restoration.restore_timestamp_to_datetime()` is returned.
         """
-        restore_method = EasyJWT._get_restore_method_for_payload_field('issued_at_date')
+        restore_method = EasyJWT._get_restore_method_for_claim('issued_at_date')
         self.assertEqual(restore_timestamp_to_datetime, restore_method)
 
-    def test_get_restore_method_for_payload_field_none(self):
+    def test_get_restore_method_for_claim_none(self):
         """
-            Test getting the restore method for a payload that has no such method.
+            Test getting the restore method for a claim that has no such method.
 
             Expected Result: `None`.
         """
-        restore_method = EasyJWT._get_restore_method_for_payload_field('payload_field_with_no_restore_method')
+        restore_method = EasyJWT._get_restore_method_for_claim('claim_with_no_restore_method')
         self.assertIsNone(restore_method)
 
-    def test_get_restore_method_for_payload_field_not_before_date(self):
+    def test_get_restore_method_for_claim_not_before_date(self):
         """
             Test getting the restore method for the not-before date.
 
             Expected Result: The method `restoration.restore_timestamp_to_datetime()` is returned.
         """
-        restore_method = EasyJWT._get_restore_method_for_payload_field('not_before_date')
+        restore_method = EasyJWT._get_restore_method_for_claim('not_before_date')
         self.assertEqual(restore_timestamp_to_datetime, restore_method)
 
-    # _restore_payload()
+    # _restore_claim_set()
     # ==================
 
-    def test_restore_payload_with_optional_fields(self):
+    def test_restore_claim_set_with_optional_claims(self):
         """
-            Test restoring a payload dictionary if optional fields are given.
+            Test restoring a claim set if optional claims are given.
 
-            Expected Result: The values in the payload are mapped to their respective instance variables.
+            Expected Result: The values in the claim set are mapped to their respective instance variables.
         """
         exp_timestamp = int(self.expiration_date.replace(tzinfo=timezone.utc).timestamp())
         iat_timestamp = int(self.issued_at_date.replace(tzinfo=timezone.utc).timestamp())
         nbf_timestamp = int(self.not_before_date.replace(tzinfo=timezone.utc).timestamp())
-        payload = dict(
+        claim_set = dict(
             _easyjwt_class='EasyJWT',
             exp=exp_timestamp,
             iat=iat_timestamp,
@@ -352,117 +352,117 @@ class EasyJWTTest(TestCase):
         )
 
         easyjwt = EasyJWT(self.key)
-        easyjwt._restore_payload(payload)
+        easyjwt._restore_claim_set(claim_set)
         self.assertEqual(self.expiration_date, easyjwt.expiration_date)
         self.assertEqual(self.issued_at_date, easyjwt.issued_at_date)
         self.assertEqual(self.not_before_date, easyjwt.not_before_date)
 
-    def test_restore_payload_without_optional_fields(self):
+    def test_restore_claim_set_without_optional_claims(self):
         """
-            Test restoring a payload dictionary if optional fields are not given.
+            Test restoring a claim set if optional claims are not given.
 
-            Expected Result: The values in the payload are mapped to their respective instance variables.
+            Expected Result: The values in the claim set are mapped to their respective instance variables.
         """
-        payload = dict(
+        claim_set = dict(
             _easyjwt_class='EasyJWT',
         )
 
         easyjwt = EasyJWT(self.key)
-        easyjwt._restore_payload(payload)
+        easyjwt._restore_claim_set(claim_set)
         self.assertIsNone(easyjwt.expiration_date)
         self.assertIsNone(easyjwt.issued_at_date)
         self.assertIsNone(easyjwt.not_before_date)
 
-    # _verify_payload()
+    # _verify_claim_set()
     # =================
 
-    def test_verify_payload_failure_class_missing(self):
+    def test_verify_claim_set_failure_class_missing(self):
         """
-            Test verifying a payload with a missing class field.
+            Test verifying a claim set with a missing class claim.
 
             Expected result: The exception for a missing class is raised.
         """
         easyjwt = EasyJWT(self.key)
-        payload = easyjwt._get_payload()
-        del payload['_easyjwt_class']
+        claim_set = easyjwt._get_claim_set()
+        del claim_set['_easyjwt_class']
 
         with self.assertRaises(UnspecifiedClassError):
-            easyjwt._verify_payload(payload)
+            easyjwt._verify_claim_set(claim_set)
 
-    def test_verify_payload_failure_class_wrong(self):
+    def test_verify_claim_set_failure_class_wrong(self):
         """
-            Test verifying a payload with a faulty value in the class field.
+            Test verifying a claim set with a faulty value in the class claim.
 
             Expected result: An exception with an explaining message is raised.
         """
         easyjwt = EasyJWT(self.key)
-        payload = easyjwt._get_payload()
-        payload['_easyjwt_class'] = 'InheritedEasyJWT'
+        claim_set = easyjwt._get_claim_set()
+        claim_set['_easyjwt_class'] = 'InheritedEasyJWT'
 
         with self.assertRaises(InvalidClassError) as exception_cm:
-            easyjwt._verify_payload(payload)
+            easyjwt._verify_claim_set(claim_set)
 
         self.assertEqual('Expected class EasyJWT. Got class InheritedEasyJWT', str(exception_cm.exception))
 
-    def test_verify_payload_failure_field_missing(self):
+    def test_verify_claim_set_failure_claims_missing(self):
         """
-            Test verifying a payload with missing fields.
+            Test verifying a claim set with missing claims.
 
             Expected result: An exception with an explaining message is raised.
         """
 
-        # Just add a non-optional field dynamically.
+        # Just add a non-optional claim dynamically.
         easyjwt = EasyJWT(self.key)
         easyjwt.email = 'test@example.com'
 
-        # And then delete it from the payload.
-        payload = easyjwt._get_payload()
-        del payload['email']
+        # And then delete it from the claim set.
+        claim_set = easyjwt._get_claim_set()
+        del claim_set['email']
 
         with self.assertRaises(InvalidClaimSetError) as exception_cm:
-            easyjwt._verify_payload(payload)
+            easyjwt._verify_claim_set(claim_set)
 
         self.assertEqual('Missing claims: {email}. Unexpected claims: {}', str(exception_cm.exception))
 
-    def test_verify_payload_failure_fields_unexpected(self):
+    def test_verify_claim_set_failure_claims_unexpected(self):
         """
-            Test verifying a payload with unexpected fields.
+            Test verifying a claim set with unexpected claims.
 
             Expected result: An exception with an explaining message is raised.
         """
         easyjwt = EasyJWT(self.key)
-        payload = easyjwt._get_payload()
-        payload['user_id'] = 1
+        claim_set = easyjwt._get_claim_set()
+        claim_set['user_id'] = 1
 
         with self.assertRaises(InvalidClaimSetError) as exception_cm:
-            easyjwt._verify_payload(payload)
+            easyjwt._verify_claim_set(claim_set)
 
         self.assertEqual('Missing claims: {}. Unexpected claims: {user_id}', str(exception_cm.exception))
 
-    def test_verify_payload_failure_fields_unexpected_and_missing(self):
+    def test_verify_claim_set_failure_claims_unexpected_and_missing(self):
         """
-            Test verifying a payload with missing and unexpected fields.
+            Test verifying a claim set with missing and unexpected claims.
 
             Expected result: An exception with an explaining message is raised.
         """
 
-        # Just add a non-optional field dynamically.
+        # Just add a non-optional claim dynamically.
         easyjwt = EasyJWT(self.key)
         easyjwt.email = 'test@example.com'
 
-        # And then delete it from the payload while adding an unexpected one.
-        payload = easyjwt._get_payload()
-        del payload['email']
-        payload['user_id'] = 1
+        # And then delete it from the claim set while adding an unexpected one.
+        claim_set = easyjwt._get_claim_set()
+        del claim_set['email']
+        claim_set['user_id'] = 1
 
         with self.assertRaises(InvalidClaimSetError) as exception_cm:
-            easyjwt._verify_payload(payload)
+            easyjwt._verify_claim_set(claim_set)
 
         self.assertEqual('Missing claims: {email}. Unexpected claims: {user_id}', str(exception_cm.exception))
 
-    def test_verify_payload_success_with_optional_fields(self):
+    def test_verify_claim_set_success_with_optional_claims(self):
         """
-            Test verifying a valid payload with (valid) optional fields.
+            Test verifying a valid claim set with (valid) optional claims.
 
             Expected result: `True`
         """
@@ -470,215 +470,215 @@ class EasyJWTTest(TestCase):
         easyjwt.expiration_date = self.expiration_date
         easyjwt.issued_at_date = self.issued_at_date
         easyjwt.not_before_date = self.not_before_date
-        payload = easyjwt._get_payload()
-        self.assertTrue(easyjwt._verify_payload(payload))
+        claim_set = easyjwt._get_claim_set()
+        self.assertTrue(easyjwt._verify_claim_set(claim_set))
 
-    def test_verify_payload_success_without_optional_fields(self):
+    def test_verify_claim_set_success_without_optional_claims(self):
         """
-            Test verifying a valid payload without an expiration date.
+            Test verifying a valid claim set without optional claims.
 
             Expected result: `True`
         """
         easyjwt = EasyJWT(self.key)
-        payload = easyjwt._get_payload()
-        self.assertTrue(easyjwt._verify_payload(payload))
+        claim_set = easyjwt._get_claim_set()
+        self.assertTrue(easyjwt._verify_claim_set(claim_set))
 
     # endregion
 
-    # region Instance Variable and Payload Field Helpers
+    # region Instance Variable and Claim Helpers
 
-    # _is_optional_payload_field()
+    # _is_optional_claim()
     # ============================
 
-    def test_is_optional_payload_field_easyjwt_class(self):
+    def test_is_optional_claim_easyjwt_class(self):
         """
-            Test if the payload field for the EasyJWT class is optional.
+            Test if the claim for the EasyJWT class is optional.
 
             Expected Result: `False`
         """
-        self.assertFalse(EasyJWT._is_optional_payload_field('_easyjwt_class'))
+        self.assertFalse(EasyJWT._is_optional_claim('_easyjwt_class'))
 
-    def test_is_optional_payload_field_expiration_date(self):
+    def test_is_optional_claim_expiration_date(self):
         """
-            Test if the payload field for the expiration date is optional.
-
-            Expected Result: `True`
-        """
-        self.assertTrue(EasyJWT._is_optional_payload_field('exp'))
-
-    def test_is_optional_payload_field_issued_at_date(self):
-        """
-            Test if the payload field for the issued-at date is optional.
+            Test if the claim for the expiration date is optional.
 
             Expected Result: `True`
         """
-        self.assertTrue(EasyJWT._is_optional_payload_field('iat'))
+        self.assertTrue(EasyJWT._is_optional_claim('exp'))
 
-    def test_is_optional_payload_field_non_optional_field(self):
+    def test_is_optional_claim_issued_at_date(self):
         """
-            Test if a payload field that is not in the optional fields list is optional.
+            Test if the claim for the issued-at date is optional.
+
+            Expected Result: `True`
+        """
+        self.assertTrue(EasyJWT._is_optional_claim('iat'))
+
+    def test_is_optional_claim_non_optional_claim(self):
+        """
+            Test if a claim that is not in the optional claims list is optional.
 
             Expected Result: `False`
         """
-        field = 'non_optional_payload_field'
-        self.assertNotIn(field, EasyJWT._optional_payload_fields)
-        self.assertFalse(EasyJWT._is_optional_payload_field(field))
+        claim = 'non_optional_claim'
+        self.assertNotIn(claim, EasyJWT._optional_claims)
+        self.assertFalse(EasyJWT._is_optional_claim(claim))
 
-    def test_is_optional_payload_field_not_before_date(self):
+    def test_is_optional_claim_not_before_date(self):
         """
-            Test if the payload field for the not-before date is optional.
+            Test if the claim for the not-before date is optional.
 
             Expected Result: `True`
         """
-        self.assertTrue(EasyJWT._is_optional_payload_field('nbf'))
+        self.assertTrue(EasyJWT._is_optional_claim('nbf'))
 
-    def test_is_optional_payload_field_optional_list(self):
+    def test_is_optional_claim_optional_list(self):
         """
-            Test if the payload fields in the optional fields list are optional.
+            Test if the claims in the optional claims list are optional.
 
             Expected Result: `True`
         """
-        for field in EasyJWT._optional_payload_fields:
-            self.assertTrue(EasyJWT._is_optional_payload_field(field))
+        for claim in EasyJWT._optional_claims:
+            self.assertTrue(EasyJWT._is_optional_claim(claim))
 
-    # _is_payload_field()
+    # _is_claim()
     # ===================
 
-    def test_is_payload_field_blacklist(self):
+    def test_is_claim_blacklist(self):
         """
-            Test if the instance variables in the blacklist are payload fields.
+            Test if the instance variables in the blacklist are claims.
 
             Expected Result: `False`
         """
-        for instance_var in EasyJWT._public_non_payload_fields:
-            self.assertFalse(EasyJWT._is_payload_field(instance_var), f'{instance_var} is a payload field')
+        for instance_var in EasyJWT._public_non_claims:
+            self.assertFalse(EasyJWT._is_claim(instance_var), f'{instance_var} is a claim')
 
-    def test_is_payload_field_expiration_date(self):
+    def test_is_claim_expiration_date(self):
         """
-            Test if the instance variable for the expiration date is a payload field.
-
-            Expected Result: `True`.
-        """
-        self.assertTrue(EasyJWT._is_payload_field('expiration_date'))
-
-    def test_is_payload_field_issued_at_date(self):
-        """
-            Test if the instance variable for the issued-at date is a payload field.
+            Test if the instance variable for the expiration date is a claim.
 
             Expected Result: `True`.
         """
-        self.assertTrue(EasyJWT._is_payload_field('issued_at_date'))
+        self.assertTrue(EasyJWT._is_claim('expiration_date'))
 
-    def test_is_payload_field_not_before_date(self):
+    def test_is_claim_issued_at_date(self):
         """
-            Test if the instance variable for the not-before date is a payload field.
+            Test if the instance variable for the issued-at date is a claim.
 
             Expected Result: `True`.
         """
-        self.assertTrue(EasyJWT._is_payload_field('not_before_date'))
+        self.assertTrue(EasyJWT._is_claim('issued_at_date'))
 
-    def test_is_payload_field_private_instance_vars(self):
+    def test_is_claim_not_before_date(self):
         """
-            Test if private instance variables that are not in the whitelist are payload fields.
+            Test if the instance variable for the not-before date is a claim.
+
+            Expected Result: `True`.
+        """
+        self.assertTrue(EasyJWT._is_claim('not_before_date'))
+
+    def test_is_claim_private_instance_vars(self):
+        """
+            Test if private instance variables that are not in the whitelist are claims.
 
             Expected Result: `False`
         """
-        instance_var = '_not_part_of_the_payload'
-        self.assertNotIn(instance_var, EasyJWT._private_payload_fields)
-        self.assertFalse(EasyJWT._is_payload_field(instance_var))
+        instance_var = '_not_part_of_the_claim_set'
+        self.assertNotIn(instance_var, EasyJWT._private_claims)
+        self.assertFalse(EasyJWT._is_claim(instance_var))
 
-    def test_is_payload_field_public_instance_vars(self):
+    def test_is_claim_public_instance_vars(self):
         """
-            Test if public instance variables that are not in the blacklist are payload fields.
+            Test if public instance variables that are not in the blacklist are claims.
 
             Expected Result: `True`
         """
-        instance_var = 'part_of_the_payload'
-        self.assertNotIn(instance_var, EasyJWT._private_payload_fields)
-        self.assertTrue(EasyJWT._is_payload_field(instance_var))
+        instance_var = 'part_of_the_claim_set'
+        self.assertNotIn(instance_var, EasyJWT._private_claims)
+        self.assertTrue(EasyJWT._is_claim(instance_var))
 
-    def test_is_payload_field_whitelist(self):
+    def test_is_claim_whitelist(self):
         """
-            Test if the instance variables in the whitelist are payload fields.
+            Test if the instance variables in the whitelist are claims.
 
             Expected Result: `True`
         """
-        for instance_var in EasyJWT._private_payload_fields:
-            self.assertTrue(EasyJWT._is_payload_field(instance_var), f'{instance_var} is not a payload field')
+        for instance_var in EasyJWT._private_claims:
+            self.assertTrue(EasyJWT._is_claim(instance_var), f'{instance_var} is not a claim')
 
-    # _map_instance_var_to_payload_field()
+    # _map_instance_var_to_claim_name()
     # ====================================
 
-    def test_map_instance_var_to_payload_field_expiration_date(self):
+    def test_map_instance_var_to_claim_name_expiration_date(self):
         """
-            Test that the expiration date is mapped correctly from instance var to payload field.
+            Test that the expiration date is mapped correctly from instance var to claim name.
 
-            Expected Result: The payload field for the expiration date is returned.
+            Expected Result: The claim name for the expiration date is returned.
         """
-        self.assertEqual('exp', EasyJWT._map_instance_var_to_payload_field('expiration_date'))
+        self.assertEqual('exp', EasyJWT._map_instance_var_to_claim_name('expiration_date'))
 
-    def test_map_instance_var_to_payload_field_issued_at_date(self):
+    def test_map_instance_var_to_claim_name_issued_at_date(self):
         """
-            Test that the issued-at date is mapped correctly from instance var to payload field.
+            Test that the issued-at date is mapped correctly from instance var to claim name.
 
-            Expected Result: The payload field for the issued-at date is returned.
+            Expected Result: The claim name for the issued-at date is returned.
         """
-        self.assertEqual('iat', EasyJWT._map_instance_var_to_payload_field('issued_at_date'))
+        self.assertEqual('iat', EasyJWT._map_instance_var_to_claim_name('issued_at_date'))
 
-    def test_map_instance_var_to_payload_field_not_before_date(self):
+    def test_map_instance_var_to_claim_name_not_before_date(self):
         """
-            Test that the not-before date is mapped correctly from instance var to payload field.
+            Test that the not-before date is mapped correctly from instance var to claim name.
 
-            Expected Result: The payload field for the not-before date is returned.
+            Expected Result: The claim name for the not-before date is returned.
         """
-        self.assertEqual('nbf', EasyJWT._map_instance_var_to_payload_field('not_before_date'))
+        self.assertEqual('nbf', EasyJWT._map_instance_var_to_claim_name('not_before_date'))
 
-    def test_map_instance_var_to_payload_field_unmapped(self):
+    def test_map_instance_var_to_claim_name_unmapped(self):
         """
-            Test that an instance variable that is not in the map is returned as the payload field.
+            Test that an instance variable that is not in the map is returned as the claim name.
 
             Expected Result: The name of the instance variable is returned unchanged.
         """
-        instance_var = 'part_of_the_payload'
-        self.assertNotIn(instance_var, EasyJWT._instance_var_payload_field_mapping)
-        self.assertEqual(instance_var, EasyJWT._map_instance_var_to_payload_field(instance_var))
+        instance_var = 'part_of_the_claim_set'
+        self.assertNotIn(instance_var, EasyJWT._instance_var_claim_name_mapping)
+        self.assertEqual(instance_var, EasyJWT._map_instance_var_to_claim_name(instance_var))
 
-    # _map_payload_field_to_instance_var()
+    # _map_claim_name_to_instance_var()
     # ====================================
 
-    def test_map_payload_field_to_instance_var_expiration_date(self):
+    def test_map_claim_name_to_instance_var_expiration_date(self):
         """
-            Test that the expiration date is mapped correctly from payload field to instance variable.
+            Test that the expiration date is mapped correctly from claim name to instance variable.
 
             Expected Result: The instance variable for the expiration date is returned.
         """
-        self.assertEqual('expiration_date', EasyJWT._map_payload_field_to_instance_var('exp'))
+        self.assertEqual('expiration_date', EasyJWT._map_claim_name_to_instance_var('exp'))
 
-    def test_map_payload_field_to_instance_var_issued_at_date(self):
+    def test_map_claim_name_to_instance_var_issued_at_date(self):
         """
-            Test that the issued-at date is mapped correctly from payload field to instance variable.
+            Test that the issued-at date is mapped correctly from claim name to instance variable.
 
             Expected Result: The instance variable for the issued-at date is returned.
         """
-        self.assertEqual('issued_at_date', EasyJWT._map_payload_field_to_instance_var('iat'))
+        self.assertEqual('issued_at_date', EasyJWT._map_claim_name_to_instance_var('iat'))
 
-    def test_map_payload_field_to_instance_var_not_before_date(self):
+    def test_map_claim_name_to_instance_var_not_before_date(self):
         """
-            Test that the not-before date is mapped correctly from payload field to instance variable.
+            Test that the not-before date is mapped correctly from claim name to instance variable.
 
             Expected Result: The instance variable for the not-before date is returned.
         """
-        self.assertEqual('not_before_date', EasyJWT._map_payload_field_to_instance_var('nbf'))
+        self.assertEqual('not_before_date', EasyJWT._map_claim_name_to_instance_var('nbf'))
 
-    def test_map_payload_field_to_instance_var_unmapped(self):
+    def test_map_claim_name_to_instance_var_unmapped(self):
         """
-            Test that a payload field that is not in the map is returned as the instance variable.
+            Test that a claim name that is not in the map is returned as the instance variable.
 
-            Expected Result: The name of the payload field is returned unchanged.
+            Expected Result: The name of the claim is returned unchanged.
         """
-        payload_field = 'part_of_the_payload'
-        self.assertNotIn(payload_field, EasyJWT._instance_var_payload_field_mapping.inv)
-        self.assertEqual(payload_field, EasyJWT._map_payload_field_to_instance_var(payload_field))
+        claim_name = 'part_of_the_claim_set'
+        self.assertNotIn(claim_name, EasyJWT._instance_var_claim_name_mapping.inv)
+        self.assertEqual(claim_name, EasyJWT._map_claim_name_to_instance_var(claim_name))
 
     # endregion
 

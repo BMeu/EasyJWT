@@ -46,7 +46,7 @@ class MissingClassErrorTest(TestCase):
         self.assertEqual('Missing class specification', error._message)
 
 
-class PayloadFieldErrorTest(TestCase):
+class InvalidClaimSetErrorTest(TestCase):
 
     def test_init(self):
         """

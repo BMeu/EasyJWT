@@ -109,7 +109,7 @@ class InvalidClassError(InvalidClaimsBaseError):
 class UnspecifiedClassError(InvalidClaimsBaseError):
     """
         Raised if the verification of a token fails because the :class:`EasyJWT` class with which it has been created is
-        not specified in the payload.
+        not specified in the claim set.
     """
 
     def __init__(self) -> None:

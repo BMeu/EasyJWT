@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 
 """
-    Collection of functions converting a value from the payload to the expected format for the token object.
+    Collection of functions converting a claim value to the expected format for the :class:`.EasyJWT` object.
 
     All functions must have the signature `(Optional[Any]) -> Optional[Any]` as an empty value may be given in the
-    payload. The functions must handle these cases gracefully.
+    claim. The functions must handle these cases gracefully.
 
-    The association between payload fields and their restoration function is defined in the dictionary
-    :attr:`.EasyJWT._payload_field_restore_methods`.
+    The association between claim and their restoration function is defined in the dictionary
+    :attr:`.EasyJWT._claim_restore_methods`.
 """
 
 from typing import Optional

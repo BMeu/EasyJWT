@@ -30,9 +30,8 @@ class EasyJWT(object):
         A base class for representing JSON Web Tokens (JWT).
 
         To use a JWT, you have to create a subclass inheriting from :class:`EasyJWT`. All public instance variables of
-        this class (that is, all instance variables not starting with an underscore) will make up the payload of your
-        token (there will be a few meta payload fields in the token as well that :class:`EasyJWT` needs to verify the
-        token).
+        this class (that is, all instance variables not starting with an underscore) will make up the claim set of your
+        token (there will be a few meta claims in the token as well that :class:`EasyJWT` needs to verify the token).
     """
 
     # region Class Variables
@@ -43,6 +42,8 @@ class EasyJWT(object):
 
         When changing the algorithm, its old value must be added to :attr:`previous_algorithms` so that old tokens may
         still be decoded properly.
+
+        This variable is not part of the claim set.
     """
 
     previous_algorithms: ClassVar[Set[Algorithm]] = {}
@@ -51,63 +52,65 @@ class EasyJWT(object):
 
         When changing the :attr:`algorithm`, its old value must be added to this set. The algorithm specified in
         :attr:`algorithm` does not have to be part of this set.
+
+        This variable is not part of the claim set.
     """
 
-    _instance_var_payload_field_mapping: ClassVar[bidict] = bidict(
+    _instance_var_claim_name_mapping: ClassVar[bidict] = bidict(
         expiration_date='exp',
         issued_at_date='iat',
         not_before_date='nbf',
     )
     """
-        A bidirectional mapping from the name of an instance variable to its name in the payload (and vice versa).
+        A bidirectional mapping from the name of an instance variable to its name in the claim set (and vice versa).
 
-        Before creating the payload for a token, all instance variables collected for the payload will be renamed
+        Before creating the claim set for a token, all instance variables collected for the claim set will be renamed
         according to this mapping. If an instance variable is not found in this mapping, its name will directly be used
-        in the payload.
+        as the claim name.
 
-        When restoring the payload from a token, all payload fields will be written to the instance variable given by
-        the inverse mapping. If a payload field is not found in this inverse mapping, its name will be used as the
+        When restoring the claim set from a token, all claims will be written to the instance variable given by
+        the inverse mapping. If a claim name is not found in this inverse mapping, its name will be used as the
         instance variable.
     """
 
-    _optional_payload_fields: ClassVar[Set[str]] = {
+    _optional_claims: ClassVar[Set[str]] = {
         'exp',
         'iat',
         'nbf',
     }
     """
-        Set of payload fields that are optional, i.e. that can be empty in the token's payload without causing an error.
+        Set of claims that are optional, i.e. that can be empty in the token's claim set without causing an error.
 
-        Note that the name of the _payload field_ must be given, not the name of the _instance variable_ (see
-        :attr:`_instance_var_payload_field_mapping`).
+        Note that the name of the _claim_ must be given, not the name of the _instance variable_ (see
+        :attr:`_instance_var_claim_name_mapping`).
     """
 
-    _payload_field_restore_methods: ClassVar[Dict[str, Callable[[Optional[Any]], Optional[Any]]]] = dict(
+    _claim_restore_methods: ClassVar[Dict[str, Callable[[Optional[Any]], Optional[Any]]]] = dict(
         expiration_date=restore_timestamp_to_datetime,
         issued_at_date=restore_timestamp_to_datetime,
         not_before_date=restore_timestamp_to_datetime,
     )
     """
-        A dictionary mapping a payload field to a method that will restore its value from the payload into the expected
-        format of the object.
+        A dictionary mapping a claim name to a method that will restore the claim's value from the claim set into the
+        expected format of the object.
 
-        Note that the name of the _instance variable_ must be given as the key, not the name of the _payload field_ (see
-        :attr:`_instance_var_payload_field_mapping`).
+        Note that the name of the _instance variable_ must be given as the key, not the name of the _claim_ (see
+        :attr:`_instance_var_claim_name_mapping`).
     """
 
-    _private_payload_fields: ClassVar[Set[str]] = {
+    _private_claims: ClassVar[Set[str]] = {
         '_easyjwt_class',
     }
     """
-        Set of instance variable names that are part of the payload although their names begin with an underscore.
+        Set of instance variable names that are part of the claim set although their names begin with an underscore.
     """
 
-    _public_non_payload_fields: ClassVar[Set[str]] = {
+    _public_non_claims: ClassVar[Set[str]] = {
         'algorithm',
         'previous_algorithms',
     }
     """
-        Set of instance variable names that are not part of the payload although their names do not begin with an
+        Set of instance variable names that are not part of the claim set although their names do not begin with an
         underscore.
     """
 
@@ -118,9 +121,10 @@ class EasyJWT(object):
     # TODO: Mention the exception that will be raised if the verification fails.
     expiration_date: Optional[datetime]
     """
-        The date and time at which this token will expire.
+        The date and time at which this token will expire. This instance variable is mapped to the registered claim
+        ``exp``.
 
-        If this field is included in a token and this token is verified after the date has passed, the verification
+        If this claim is included in a token and this token is verified after the date has passed, the verification
         will fail.
 
         Must be given in UTC.
@@ -128,12 +132,13 @@ class EasyJWT(object):
 
     issued_at_date: Optional[datetime]
     """
-        The date and time at which the token has been created.
+        The date and time at which the token has been created. This instance variable is mapped to the registered claim
+        ``iat``.
 
-        This field will automatically be set in :meth:`.create`. See that method on how to overwrite the value.
+        This claim will automatically be set in :meth:`.create`. See that method on how to overwrite the value.
 
-        When initializing a new object, this field will be `None`. With each creation, it will be updated accordingly.
-        When verifying a token and restoring the object, this field will be set to the value given in the token (if it
+        When initializing a new object, this claim will be `None`. With each creation, it will be updated accordingly.
+        When verifying a token and restoring the object, this claim will be set to the value given in the token (if it
         is included).
 
         Will be given in UTC.
@@ -142,9 +147,10 @@ class EasyJWT(object):
     # TODO: Mention the exception that will be raised if the verification fails.
     not_before_date: Optional[datetime]
     """
-        The date and time before which this token will not be valid.
+        The date and time before which this token will not be valid. This instance variable is mapped to the registered
+        claim ``nbf``.
 
-        If this field is included in a token and this token is verified before the date has been reached, the
+        If this claim is included in a token and this token is verified before the date has been reached, the
         verification will fail.
 
         Must be given in UTC.
@@ -197,28 +203,27 @@ class EasyJWT(object):
             self.issued_at_date = datetime.utcnow()
 
         # Encode the object.
-        payload = self._get_payload()
-        token_bytes = jwt_encode(payload, self._key, algorithm=self.algorithm.value)
+        # TODO: Fail if a non-optional claim is empty.
+        claim_set = self._get_claim_set()
+        token_bytes = jwt_encode(claim_set, self._key, algorithm=self.algorithm.value)
 
-        # The encoded payload is a bytestream. Create a UTF-8 string.
+        # The encoded claim set is a bytestream. Create a UTF-8 string.
         token = token_bytes.decode('utf-8')
         return token
 
-    def _get_payload(self, with_empty_fields: bool = False) -> Dict[str, Any]:
+    def _get_claim_set(self, with_empty_claims: bool = False) -> Dict[str, Any]:
         """
-            Get the payload of this token.
+            Get the claim set of this token.
 
-            :param with_empty_fields: If set to `True`, fields that have no value will be included.
-            :return: A dictionary of instance variables with their current values that make up the token's payload.
-                     Instance variable names are mapped to their respective payload field names. Fields that have no
-                     value are excluded.
+            :param with_empty_claims: If set to `True`, claims that have no value will be included.
+            :return: A dictionary of instance variables with their current values that make up the token's claim set.
+                     Instance variable names are mapped to their respective claim names. Claims that have no value are
+                     excluded.
         """
 
-        # TODO: Fail if a non-optional field is empty.
-
-        return {EasyJWT._map_instance_var_to_payload_field(field): value
-                for (field, value) in vars(self).items()
-                if self._is_payload_field(field) and (with_empty_fields or value is not None)
+        return {EasyJWT._map_instance_var_to_claim_name(name): value
+                for (name, value) in vars(self).items()
+                if self._is_claim(name) and (with_empty_claims or value is not None)
                 }
 
     # endregion
@@ -233,9 +238,9 @@ class EasyJWT(object):
             :param token: The JWT to verify.
             :param key: The key used for decoding the token. This key must be the same with which the token has been
                         created.
-            :return: The object representing the token. The payload values are set on the corresponding instance
+            :return: The object representing the token. The claim values are set on the corresponding instance
                      variables.
-            :raise InvalidClaimsBaseError: If the given token's payload is invalid.
+            :raise InvalidClaimsBaseError: If the given token's claim set is invalid.
         """
         # TODO: List all errors in the docstring.
 
@@ -244,11 +249,11 @@ class EasyJWT(object):
 
         # Decode the given token.
         algorithms = easyjwt._get_decode_algorithms()
-        payload = jwt_decode(token, easyjwt._key, algorithms=algorithms)
+        claim_set = jwt_decode(token, easyjwt._key, algorithms=algorithms)
 
         # Verify and restore the token.
-        easyjwt._verify_payload(payload)
-        easyjwt._restore_payload(payload)
+        easyjwt._verify_claim_set(claim_set)
+        easyjwt._restore_claim_set(claim_set)
 
         return easyjwt
 
@@ -264,156 +269,158 @@ class EasyJWT(object):
         algorithms.add(cls.algorithm.value)
         return algorithms
 
-    def _get_payload_fields(self) -> Set[str]:
+    def _get_claim_names(self) -> Set[str]:
         """
-            Get all fields that are part of the payload.
+            Get the names of all claims in the claim set, mapped to the respective instance variable's name.
 
-            :return: A set of names of the instance variables that make up the payload fields.
+            :return: A set of names of the instance variables that make up the claim set.
         """
 
-        return set(self._get_payload(with_empty_fields=True).keys())
+        return set(self._get_claim_set(with_empty_claims=True).keys())
 
     @classmethod
-    def _get_restore_method_for_payload_field(cls, field: str) -> Optional[Callable[[Optional[Any]], Optional[Any]]]:
+    def _get_restore_method_for_claim(cls, claim: str) -> Optional[Callable[[Optional[Any]], Optional[Any]]]:
         """
-            Get the method for the given payload field that restores the field's value to the expected format.
+            Get the method for the given claim that restores the claim value to the expected format.
 
-            :param field: The payload field for which the restore method will be returned.
-            :return: The method for the given field if it exists. `None` if there is no such method.
+            :param claim: The claim for which the restore method will be returned.
+            :return: The method for the given claim if it exists. `None` if there is no such method.
         """
-        return cls._payload_field_restore_methods.get(field, None)
+        return cls._claim_restore_methods.get(claim, None)
 
-    def _restore_payload(self, payload: Dict[str, Any]) -> None:
+    def _restore_claim_set(self, claim_set: Dict[str, Any]) -> None:
         """
-            Restore the token data from the given payload.
+            Restore the token data from the given claim set.
 
-            The payload's values will be written to the field's corresponding instance variable.
+            The claims' values will be written to the claims' corresponding instance variable.
 
-            :param payload: The payload from which the state will be restored.
+            :param claim_set: The claim set from which the state will be restored.
         """
 
-        for field, value in payload.items():
+        for name, value in claim_set.items():
             # Find the corresponding instance variable.
-            field = self._map_payload_field_to_instance_var(field)
+            name = self._map_claim_name_to_instance_var(name)
 
             # Restore the value (if necessary).
-            restore_method = self._get_restore_method_for_payload_field(field)
+            restore_method = self._get_restore_method_for_claim(name)
             if restore_method is not None and value is not None:
                 value = restore_method(value)
 
             # Actually set the value.
-            setattr(self, field, value)
+            setattr(self, name, value)
 
-    def _verify_payload(self, payload: Dict[str, Any]) -> bool:
+    def _verify_claim_set(self, claim_set: Dict[str, Any]) -> bool:
         """
-            Verify that the payload contains exactly the expected fields, that is, expected fields must not be missing
-            from the payload and the payload must not contain any additional fields. Furthermore, verify that this
-            object is of the right class for the token.
+            Verify that the claim set contains exactly the expected claims, that is, non-optional claims must not be
+            missing from the claim set and the claim set must not contain any additional claims. Furthermore, verify
+            that this object is of the right class for the token.
 
-            Expected fields are all those that would be used in a token created by this object.
+            Expected claims are all the (non-optional) claims that would be used in a token created by this object.
 
-            :param payload: The payload to verify.
-            :return: ``True`` if the payload contains all expected fields and is of this class, ``False`` otherwise.
-            :raise UnspecifiedClassError: If the payload does not contain the class with which the token has been created.
-            :raise InvalidClaimSetError: If the payload does not contain exactly the expected fields.
-            :raise InvalidClassError: If the payload is not verified with the class with which the token has been created.
+            :param claim_set: The claim set to verify.
+            :return: `True` if the claim set contains all expected claims and is of this class, `False` otherwise.
+            :raise UnspecifiedClassError: If the claim set does not contain the class with which the token has been
+                                          created.
+            :raise InvalidClaimSetError: If the claim set does not contain exactly the expected (non-optional) claims.
+            :raise InvalidClassError: If the claim set is not verified with the class with which the token has been
+                                      created.
         """
 
         # Check the token's class: it must be specified and be this class.
         class_name = self._get_class_name()
-        payload_class_name = payload.get('_easyjwt_class', None)
-        if payload_class_name is None:
+        claim_class_name = claim_set.get('_easyjwt_class', None)
+        if claim_class_name is None:
             raise UnspecifiedClassError()
 
-        if payload_class_name != class_name:
-            raise InvalidClassError(expected_class=class_name, actual_class=payload_class_name)
+        if claim_class_name != class_name:
+            raise InvalidClassError(expected_class=class_name, actual_class=claim_class_name)
 
-        # Determine missing and unexpected fields. Missing fields are those specified in this class but not given in the
-        # payload. Unexpected fields are those given in the payload but not specified in this class.
-        expected_fields = self._get_payload_fields()
-        actual_fields = set(payload.keys())
+        # Determine missing and unexpected claims. Missing claims are those specified in this class but not given in the
+        # claim set. Unexpected claims are those given in the claim set but not specified in this class.
+        expected_claims = self._get_claim_names()
+        actual_claims = set(claim_set.keys())
 
-        # Use the name of the instance variable for missing payload fields to avoid confusion.
-        # For unexpected fields, use the name of the payload field.
-        missing_fields = {self._map_payload_field_to_instance_var(field) for field
-                          in expected_fields.difference(actual_fields) if not self._is_optional_payload_field(field)}
-        unexpected_fields = actual_fields.difference(expected_fields)
+        # Use the name of the instance variable for missing claims to avoid confusion.
+        # For unexpected claims, use the name of the claim.
+        missing_claims = {self._map_claim_name_to_instance_var(name) for name
+                          in expected_claims.difference(actual_claims) if not self._is_optional_claim(name)}
+        unexpected_claims = actual_claims.difference(expected_claims)
 
-        # If there are no missing fields or unexpected fields, everything is fine.
-        if len(missing_fields) == 0 and len(unexpected_fields) == 0:
+        # If there are no missing or unexpected claims, everything is fine.
+        if len(missing_claims) == 0 and len(unexpected_claims) == 0:
             return True
 
         # Otherwise, raise an exception.
-        raise InvalidClaimSetError(missing_fields, unexpected_fields)
+        raise InvalidClaimSetError(missing_claims, unexpected_claims)
 
     # endregion
 
-    # region Instance Variable and Payload Field Helpers
+    # region Instance Variable and Claim Helpers
 
     @classmethod
-    def _is_optional_payload_field(cls, field: str) -> bool:
+    def _is_optional_claim(cls, claim_name: str) -> bool:
         """
-            Determine if the given payload is optional and may thus be empty in the payload.
+            Determine if the given claim is optional and may thus be empty or missing in the claim set.
 
-            A payload field is optional if it is listed in :attr:`_optional_payload_fields`.
+            A claim is optional if it is listed in :attr:`_optional_claims`.
 
-            :param field: The name of the payload field to check.
-            :return: `True` if the given payload field is optional, `False` otherwise.
+            :param claim_name: The name of the claim to check.
+            :return: `True` if the given claim is optional, `False` otherwise.
         """
-        return field in cls._optional_payload_fields
+        return claim_name in cls._optional_claims
 
     @classmethod
-    def _is_payload_field(cls, instance_var: str) -> bool:
+    def _is_claim(cls, instance_var: str) -> bool:
         """
-            Determine if a given instance variable is part of the token's payload.
+            Determine if a given instance variable is part of the token's claim set.
 
-            An instance variable will be considered to be a part of the payload if:
+            An instance variable will be considered to be a claim if:
 
-            * it is listed in :attr:`_private_payload_fields`, or
+            * it is listed in :attr:`_private_claims`, or
             * it does not start with an underscore, but
-                * is not listed in :attr:`_public_non_payload_fields'.
+                * is not listed in :attr:`_public_non_claims'.
 
             :param instance_var: The name of the instance variable to check.
-            :return: `True` if the instance variable is part of the payload, `False` otherwise.
+            :return: `True` if the instance variable is part of the claim set, `False` otherwise.
         """
 
-        # Some instance variables are always included in the payload.
-        if instance_var in cls._private_payload_fields:
+        # Some instance variables are always included in the claim set.
+        if instance_var in cls._private_claims:
             return True
 
         # Private instance variables are never included (unless explicitly allowed above).
         if instance_var.startswith('_'):
             return False
 
-        # Public instance variables might not be a payload field.
-        if instance_var in cls._public_non_payload_fields:
+        # Public instance variables might not be a claim.
+        if instance_var in cls._public_non_claims:
             return False
 
         return True
 
     @classmethod
-    def _map_instance_var_to_payload_field(cls, instance_var: str) -> str:
+    def _map_instance_var_to_claim_name(cls, instance_var: str) -> str:
         """
-            Map an instance variable that will be part of the payload to its name in the payload.
+            Map an instance variable that will be part of the claim set to its claim name.
 
             :param instance_var: The name of the instance variable to map.
-            :return: The name of the corresponding payload field.
+            :return: The name of the corresponding claim.
         """
 
         # If the instance variable is not defined in the mapping, return the variable's name.
-        return cls._instance_var_payload_field_mapping.get(instance_var, instance_var)
+        return cls._instance_var_claim_name_mapping.get(instance_var, instance_var)
 
     @classmethod
-    def _map_payload_field_to_instance_var(cls, payload_field: str) -> str:
+    def _map_claim_name_to_instance_var(cls, claim_name: str) -> str:
         """
-            Map a field in the payload to the name of its instance variable.
+            Map a claim to the name of its instance variable.
 
-            :param payload_field: The name of the payload field to map.
+            :param claim_name: The name of the claim to map.
             :return: The name of the corresponding instance variable.
         """
 
-        # If the payload field is not defined in the mapping, return its field name.
-        return cls._instance_var_payload_field_mapping.inv.get(payload_field, payload_field)
+        # If the claim_name name is not defined in the mapping, return its own name.
+        return cls._instance_var_claim_name_mapping.inv.get(claim_name, claim_name)
 
     # endregion
 
