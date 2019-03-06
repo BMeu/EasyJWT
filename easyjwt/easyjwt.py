@@ -56,6 +56,19 @@ class EasyJWT(object):
         This variable is not part of the claim set.
     """
 
+    _claim_restore_methods: ClassVar[Dict[str, Callable[[Optional[Any]], Optional[Any]]]] = dict(
+        expiration_date=restore_timestamp_to_datetime,
+        issued_at_date=restore_timestamp_to_datetime,
+        not_before_date=restore_timestamp_to_datetime,
+    )
+    """
+        A dictionary mapping a claim name to a method that will restore the claim's value from the claim set into the
+        expected format of the object.
+
+        Note that the name of the _instance variable_ must be given as the key, not the name of the _claim_ (see
+        :attr:`_instance_var_claim_name_mapping`).
+    """
+
     _instance_var_claim_name_mapping: ClassVar[bidict] = bidict(
         expiration_date='exp',
         issued_at_date='iat',
@@ -82,19 +95,6 @@ class EasyJWT(object):
         Set of claims that are optional, i.e. that can be empty in the token's claim set without causing an error.
 
         Note that the name of the _claim_ must be given, not the name of the _instance variable_ (see
-        :attr:`_instance_var_claim_name_mapping`).
-    """
-
-    _claim_restore_methods: ClassVar[Dict[str, Callable[[Optional[Any]], Optional[Any]]]] = dict(
-        expiration_date=restore_timestamp_to_datetime,
-        issued_at_date=restore_timestamp_to_datetime,
-        not_before_date=restore_timestamp_to_datetime,
-    )
-    """
-        A dictionary mapping a claim name to a method that will restore the claim's value from the claim set into the
-        expected format of the object.
-
-        Note that the name of the _instance variable_ must be given as the key, not the name of the _claim_ (see
         :attr:`_instance_var_claim_name_mapping`).
     """
 
@@ -257,6 +257,15 @@ class EasyJWT(object):
 
         return easyjwt
 
+    def _get_claim_names(self) -> Set[str]:
+        """
+            Get the names of all claims in the claim set, mapped to the respective instance variable's name.
+
+            :return: A set of names of the instance variables that make up the claim set.
+        """
+
+        return set(self._get_claim_set(with_empty_claims=True).keys())
+
     @classmethod
     def _get_decode_algorithms(cls) -> Set[str]:
         """
@@ -269,15 +278,6 @@ class EasyJWT(object):
         algorithms.add(cls.algorithm.value)
         return algorithms
 
-    def _get_claim_names(self) -> Set[str]:
-        """
-            Get the names of all claims in the claim set, mapped to the respective instance variable's name.
-
-            :return: A set of names of the instance variables that make up the claim set.
-        """
-
-        return set(self._get_claim_set(with_empty_claims=True).keys())
-
     @classmethod
     def _get_restore_method_for_claim(cls, claim: str) -> Optional[Callable[[Optional[Any]], Optional[Any]]]:
         """
@@ -286,6 +286,7 @@ class EasyJWT(object):
             :param claim: The claim for which the restore method will be returned.
             :return: The method for the given claim if it exists. `None` if there is no such method.
         """
+
         return cls._claim_restore_methods.get(claim, None)
 
     def _restore_claim_set(self, claim_set: Dict[str, Any]) -> None:
@@ -358,18 +359,6 @@ class EasyJWT(object):
     # region Instance Variable and Claim Helpers
 
     @classmethod
-    def _is_optional_claim(cls, claim_name: str) -> bool:
-        """
-            Determine if the given claim is optional and may thus be empty or missing in the claim set.
-
-            A claim is optional if it is listed in :attr:`_optional_claims`.
-
-            :param claim_name: The name of the claim to check.
-            :return: `True` if the given claim is optional, `False` otherwise.
-        """
-        return claim_name in cls._optional_claims
-
-    @classmethod
     def _is_claim(cls, instance_var: str) -> bool:
         """
             Determine if a given instance variable is part of the token's claim set.
@@ -399,16 +388,17 @@ class EasyJWT(object):
         return True
 
     @classmethod
-    def _map_instance_var_to_claim_name(cls, instance_var: str) -> str:
+    def _is_optional_claim(cls, claim_name: str) -> bool:
         """
-            Map an instance variable that will be part of the claim set to its claim name.
+            Determine if the given claim is optional and may thus be empty or missing in the claim set.
 
-            :param instance_var: The name of the instance variable to map.
-            :return: The name of the corresponding claim.
+            A claim is optional if it is listed in :attr:`_optional_claims`.
+
+            :param claim_name: The name of the claim to check.
+            :return: `True` if the given claim is optional, `False` otherwise.
         """
 
-        # If the instance variable is not defined in the mapping, return the variable's name.
-        return cls._instance_var_claim_name_mapping.get(instance_var, instance_var)
+        return claim_name in cls._optional_claims
 
     @classmethod
     def _map_claim_name_to_instance_var(cls, claim_name: str) -> str:
@@ -421,6 +411,18 @@ class EasyJWT(object):
 
         # If the claim_name name is not defined in the mapping, return its own name.
         return cls._instance_var_claim_name_mapping.inv.get(claim_name, claim_name)
+
+    @classmethod
+    def _map_instance_var_to_claim_name(cls, instance_var: str) -> str:
+        """
+            Map an instance variable that will be part of the claim set to its claim name.
+
+            :param instance_var: The name of the instance variable to map.
+            :return: The name of the corresponding claim.
+        """
+
+        # If the instance variable is not defined in the mapping, return the variable's name.
+        return cls._instance_var_claim_name_mapping.get(instance_var, instance_var)
 
     # endregion
 

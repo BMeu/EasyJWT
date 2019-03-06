@@ -20,6 +20,7 @@ class RestorationTest(TestCase):
 
             Expected Result: `None`
         """
+
         self.assertIsNone(restore_timestamp_to_datetime(None))
 
     def test_restore_timestamp_to_datetime_value(self):
@@ -28,6 +29,7 @@ class RestorationTest(TestCase):
 
             Expected Result: The corresponding `datetime` object.
         """
+
         date = datetime.utcnow().replace(microsecond=0)
         timestamp = int(date.replace(tzinfo=timezone.utc).timestamp())
         self.assertEqual(date, restore_timestamp_to_datetime(timestamp))

@@ -5,9 +5,9 @@
     Collection of functions converting a claim value to the expected format for the :class:`.EasyJWT` object.
 
     All functions must have the signature `(Optional[Any]) -> Optional[Any]` as an empty value may be given in the
-    claim. The functions must handle these cases gracefully.
+    claim.
 
-    The association between claim and their restoration function is defined in the dictionary
+    The association between claims and their restoration functions is defined in the dictionary
     :attr:`.EasyJWT._claim_restore_methods`.
 """
 

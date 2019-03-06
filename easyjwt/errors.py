@@ -58,7 +58,7 @@ class VerificationError(EasyJWTError):
 
 class InvalidClaimsBaseError(VerificationError):
     """
-        A base class for all errors raised if the claims in a token are invalid.
+        A base class for all errors raised if the token contains invalid claims.
     """
     pass
 

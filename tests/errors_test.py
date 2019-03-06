@@ -8,6 +8,8 @@ from easyjwt import UnspecifiedClassError
 from easyjwt import InvalidClaimSetError
 from easyjwt import InvalidClassError
 
+# region Base Error
+
 
 class EasyJWTErrorTest(TestCase):
 
@@ -32,18 +34,9 @@ class EasyJWTErrorTest(TestCase):
         error = EasyJWTError('EasyJWTError message')
         self.assertEqual(error._message, str(error))
 
+# endregion
 
-class MissingClassErrorTest(TestCase):
-
-    def test_init(self):
-        """
-            Test the initialization of the error.
-
-            Expected result: The message is correctly initialized.
-        """
-
-        error = UnspecifiedClassError()
-        self.assertEqual('Missing class specification', error._message)
+# region Verification Error
 
 
 class InvalidClaimSetErrorTest(TestCase):
@@ -79,7 +72,7 @@ class InvalidClaimSetErrorTest(TestCase):
         self.assertEqual(message, error._message)
 
 
-class WrongClassErrorTest(TestCase):
+class InvalidClassErrorTest(TestCase):
 
     def test_init(self):
         """
@@ -92,3 +85,18 @@ class WrongClassErrorTest(TestCase):
         actual_class = 'ActualEasyJWTClass'
         error = InvalidClassError(expected_class=expected_class, actual_class=actual_class)
         self.assertEqual(f'Expected class {expected_class}. Got class {actual_class}', error._message)
+
+
+class UnspecifiedClassErrorTest(TestCase):
+
+    def test_init(self):
+        """
+            Test the initialization of the error.
+
+            Expected result: The message is correctly initialized.
+        """
+
+        error = UnspecifiedClassError()
+        self.assertEqual('Missing class specification', error._message)
+
+# endregion
