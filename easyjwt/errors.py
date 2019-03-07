@@ -34,7 +34,7 @@ class EasyJWTError(Exception):
 
 # endregion
 
-# region Creation Error
+# region Creation Errors
 
 
 class CreationError(EasyJWTError):
@@ -68,7 +68,7 @@ class MissingRequiredClaimsError(CreationError):
 
 # endregion
 
-# region Verification Error
+# region Verification Errors
 
 
 class VerificationError(EasyJWTError):
@@ -77,17 +77,26 @@ class VerificationError(EasyJWTError):
     """
     pass
 
-# region Invalid Claims
 
-
-class InvalidClaimsBaseError(VerificationError):
+class ExpiredTokenError(VerificationError):
     """
-        A base class for all errors raised if the token contains invalid claims.
+        Raised if the verification of a token fails because the included expiration date has passed.
     """
-    pass
+
+    def __init__(self) -> None:
+        super().__init__('Token has expired')
 
 
-class InvalidClaimSetError(InvalidClaimsBaseError):
+class ImmatureTokenError(VerificationError):
+    """
+        Raised if the verification of a token fails because the included not-before date has not been reached yet.
+    """
+
+    def __init__(self) -> None:
+        super().__init__('Token is not yet valid')
+
+
+class InvalidClaimSetError(VerificationError):
     """
         Raised if the verification of a token fails because the claim set is invalid due to missing or unexpected
         claims.
@@ -133,7 +142,7 @@ class InvalidClaimSetError(InvalidClaimsBaseError):
         super().__init__(f'Missing claims: {missing}. Unexpected claims: {unexpected}')
 
 
-class InvalidClassError(InvalidClaimsBaseError):
+class InvalidClassError(VerificationError):
     """
         Raised if the verification of a token fails because the :class:`EasyJWT` class with which it has been created is
         not the one with which it is being verified.
@@ -161,7 +170,25 @@ class InvalidClassError(InvalidClaimsBaseError):
         super().__init__(f'Expected class {expected_class}. Got class {actual_class}')
 
 
-class UnspecifiedClassError(InvalidClaimsBaseError):
+class InvalidKeyError(VerificationError):
+    """
+        Raised if the verification of token fails because the key used for decoding the token is invalid.
+    """
+
+    def __init__(self) -> None:
+        super().__init__('Invalid key')
+
+
+class InvalidSignatureError(VerificationError):
+    """
+        Raised if the verification of token fails because the token's signature does not validate the token's content.
+    """
+
+    def __init__(self) -> None:
+        super().__init__('Invalid signature')
+
+
+class UnspecifiedClassError(VerificationError):
     """
         Raised if the verification of a token fails because the :class:`EasyJWT` class with which it has been created is
         not specified in the claim set.
@@ -171,6 +198,12 @@ class UnspecifiedClassError(InvalidClaimsBaseError):
         super().__init__('Missing class specification')
 
 
-# endregion
+class UnsupportedAlgorithmError(VerificationError):
+    """
+        Raised if the verification of a token fails because the algorithm used for encoding the token is not supported.
+    """
+
+    def __init__(self) -> None:
+        super().__init__('Algorithm used for encoding the token is not supported')
 
 # endregion

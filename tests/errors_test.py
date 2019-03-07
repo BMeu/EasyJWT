@@ -4,10 +4,15 @@
 from unittest import TestCase
 
 from easyjwt import EasyJWTError
-from easyjwt import UnspecifiedClassError
+from easyjwt import ExpiredTokenError
+from easyjwt import ImmatureTokenError
 from easyjwt import InvalidClaimSetError
 from easyjwt import InvalidClassError
+from easyjwt import InvalidKeyError
+from easyjwt import InvalidSignatureError
 from easyjwt import MissingRequiredClaimsError
+from easyjwt import UnspecifiedClassError
+from easyjwt import UnsupportedAlgorithmError
 
 # region Base Error
 
@@ -37,7 +42,7 @@ class EasyJWTErrorTest(TestCase):
 
 # endregion
 
-# region Creation Error
+# region Creation Errors
 
 
 class MissingRequiredClaimsErrorTest(TestCase):
@@ -58,7 +63,33 @@ class MissingRequiredClaimsErrorTest(TestCase):
 
 # endregion
 
-# region Verification Error
+# region Verification Errors
+
+
+class ExpiredTokenErrorTest(TestCase):
+
+    def test_init(self):
+        """
+            Test the initialization of the error.
+
+            Expected Result: The message is correctly initialized.
+        """
+
+        error = ExpiredTokenError()
+        self.assertEqual('Token has expired', error._message)
+
+
+class ImmatureTokenErrorTest(TestCase):
+
+    def test_init(self):
+        """
+            Test the initialization of the error.
+
+            Expected Result: The message is correctly initialized.
+        """
+
+        error = ImmatureTokenError()
+        self.assertEqual('Token is not yet valid', error._message)
 
 
 class InvalidClaimSetErrorTest(TestCase):
@@ -67,7 +98,7 @@ class InvalidClaimSetErrorTest(TestCase):
         """
             Test the initialization of the error.
 
-            Expected result: The message is correctly initialized with the given claims. The claims are saved in the
+            Expected Result: The message is correctly initialized with the given claims. The claims are saved in the
                              error object.
         """
 
@@ -109,7 +140,7 @@ class InvalidClassErrorTest(TestCase):
         """
             Test the initialization of the error.
 
-            Expected result: The message is correctly initialized. The classes are saved in the error object.
+            Expected Result: The message is correctly initialized. The classes are saved in the error object.
         """
 
         expected_class = 'ExpectedEasyJWTClass'
@@ -121,16 +152,55 @@ class InvalidClassErrorTest(TestCase):
         self.assertEqual(expected_class, error.expected_class)
 
 
+class ImmatureKeyErrorTest(TestCase):
+
+    def test_init(self):
+        """
+            Test the initialization of the error.
+
+            Expected Result: The message is correctly initialized.
+        """
+
+        error = InvalidKeyError()
+        self.assertEqual('Invalid key', error._message)
+
+
+class ImmatureSignatureErrorTest(TestCase):
+
+    def test_init(self):
+        """
+            Test the initialization of the error.
+
+            Expected Result: The message is correctly initialized.
+        """
+
+        error = InvalidSignatureError()
+        self.assertEqual('Invalid signature', error._message)
+
+
 class UnspecifiedClassErrorTest(TestCase):
 
     def test_init(self):
         """
             Test the initialization of the error.
 
-            Expected result: The message is correctly initialized.
+            Expected Result: The message is correctly initialized.
         """
 
         error = UnspecifiedClassError()
         self.assertEqual('Missing class specification', error._message)
+
+
+class UnsupportedAlgorithmErrorTest(TestCase):
+
+    def test_init(self):
+        """
+            Test the initialization of the error.
+
+            Expected Result: The message is correctly initialized.
+        """
+
+        error = UnsupportedAlgorithmError()
+        self.assertEqual('Algorithm used for encoding the token is not supported', error._message)
 
 # endregion

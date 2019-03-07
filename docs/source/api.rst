@@ -3,8 +3,12 @@ API
 
 .. automodule:: easyjwt
 
+TODO: Include TOC of this page.
+
 Classes
 -------
+
+This section lists all classes defined by |project|.
 
 .. autoclass:: easyjwt.EasyJWT
     :members:
@@ -13,6 +17,8 @@ Classes
 Enumerations
 ------------
 
+This section lists all enumerations defined by |project|.
+
 .. autoclass:: easyjwt.Algorithm
     :members:
     :show-inheritance:
@@ -20,9 +26,14 @@ Enumerations
 Errors
 ------
 
+This section lists all error classes defined by |project|.
+
 .. autoclass:: easyjwt.EasyJWTError
     :members:
     :show-inheritance:
+
+Creation Errors
+~~~~~~~~~~~~~~~
 
 .. autoclass:: easyjwt.CreationError
     :members:
@@ -32,11 +43,18 @@ Errors
     :members:
     :show-inheritance:
 
+Verification Errors
+~~~~~~~~~~~~~~~~~~~
+
 .. autoclass:: easyjwt.VerificationError
     :members:
     :show-inheritance:
 
-.. autoclass:: easyjwt.InvalidClaimsBaseError
+.. autoclass:: easyjwt.ExpiredTokenError
+    :members:
+    :show-inheritance:
+
+.. autoclass:: easyjwt.ImmatureTokenError
     :members:
     :show-inheritance:
 
@@ -48,15 +66,29 @@ Errors
     :members:
     :show-inheritance:
 
+.. autoclass:: easyjwt.InvalidKeyError
+    :members:
+    :show-inheritance:
+
+.. autoclass:: easyjwt.InvalidSignatureError
+    :members:
+    :show-inheritance:
+
 .. autoclass:: easyjwt.UnspecifiedClassError
+    :members:
+    :show-inheritance:
+
+.. autoclass:: easyjwt.UnsupportedAlgorithmError
     :members:
     :show-inheritance:
 
 Modules
 -------
 
-restore
-~~~~~~~
+This section lists all modules defined by |project|.
+
+restoration
+~~~~~~~~~~~
 
 .. automodule:: easyjwt.restoration
     :members:
