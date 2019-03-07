@@ -50,9 +50,11 @@ class MissingRequiredClaimsErrorTest(TestCase):
         """
 
         missing = ['missing_1', 'missing_2']
+
         error = MissingRequiredClaimsError(missing)
         message = 'Required empty claims: {missing_1, missing_2}'
         self.assertEqual(message, error._message)
+        self.assertSetEqual(set(missing), error.missing_claims)
 
 # endregion
 
@@ -65,7 +67,8 @@ class InvalidClaimSetErrorTest(TestCase):
         """
             Test the initialization of the error.
 
-            Expected result: The message is correctly initialized with the given claims.
+            Expected result: The message is correctly initialized with the given claims. The claims are saved in the
+                             error object.
         """
 
         missing = ['missing_1', 'missing_2']
@@ -75,21 +78,29 @@ class InvalidClaimSetErrorTest(TestCase):
         error = InvalidClaimSetError()
         message = 'Missing claims: {}. Unexpected claims: {}'
         self.assertEqual(message, error._message)
+        self.assertSetEqual(set(), error.missing_claims)
+        self.assertSetEqual(set(), error.unexpected_claims)
 
         # Missing claims, no unexpected claims.
         error = InvalidClaimSetError(missing_claims=missing)
         message = 'Missing claims: {missing_1, missing_2}. Unexpected claims: {}'
         self.assertEqual(message, error._message)
+        self.assertSetEqual(set(missing), error.missing_claims)
+        self.assertSetEqual(set(), error.unexpected_claims)
 
         # No missing claims, unexpected claims.
         error = InvalidClaimSetError(unexpected_claims=unexpected)
         message = 'Missing claims: {}. Unexpected claims: {unexpected_1, unexpected_2}'
         self.assertEqual(message, error._message)
+        self.assertSetEqual(set(), error.missing_claims)
+        self.assertSetEqual(set(unexpected), error.unexpected_claims)
 
         # Missing claims, unexpected claims.
         error = InvalidClaimSetError(missing_claims=missing, unexpected_claims=unexpected)
         message = 'Missing claims: {missing_1, missing_2}. Unexpected claims: {unexpected_1, unexpected_2}'
         self.assertEqual(message, error._message)
+        self.assertSetEqual(set(missing), error.missing_claims)
+        self.assertSetEqual(set(unexpected), error.unexpected_claims)
 
 
 class InvalidClassErrorTest(TestCase):
@@ -98,13 +109,16 @@ class InvalidClassErrorTest(TestCase):
         """
             Test the initialization of the error.
 
-            Expected result: The message is correctly initialized.
+            Expected result: The message is correctly initialized. The classes are saved in the error object.
         """
 
         expected_class = 'ExpectedEasyJWTClass'
         actual_class = 'ActualEasyJWTClass'
+
         error = InvalidClassError(expected_class=expected_class, actual_class=actual_class)
         self.assertEqual(f'Expected class {expected_class}. Got class {actual_class}', error._message)
+        self.assertEqual(actual_class, error.actual_class)
+        self.assertEqual(expected_class, error.expected_class)
 
 
 class UnspecifiedClassErrorTest(TestCase):
