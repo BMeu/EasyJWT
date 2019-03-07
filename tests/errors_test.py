@@ -7,6 +7,7 @@ from easyjwt import EasyJWTError
 from easyjwt import UnspecifiedClassError
 from easyjwt import InvalidClaimSetError
 from easyjwt import InvalidClassError
+from easyjwt import MissingRequiredClaimsError
 
 # region Base Error
 
@@ -33,6 +34,25 @@ class EasyJWTErrorTest(TestCase):
 
         error = EasyJWTError('EasyJWTError message')
         self.assertEqual(error._message, str(error))
+
+# endregion
+
+# region Creation Error
+
+
+class MissingRequiredClaimsErrorTest(TestCase):
+
+    def test_init(self):
+        """
+            Test the initialization of the error.
+
+            Expected result: The message is correctly initialized with the given claims.
+        """
+
+        missing = ['missing_1', 'missing_2']
+        error = MissingRequiredClaimsError(missing)
+        message = 'Required empty claims: {missing_1, missing_2}'
+        self.assertEqual(message, error._message)
 
 # endregion
 

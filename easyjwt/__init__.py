@@ -12,6 +12,7 @@ from .errors import EasyJWTError
 from .errors import InvalidClaimsBaseError
 from .errors import InvalidClaimSetError
 from .errors import InvalidClassError
+from .errors import MissingRequiredClaimsError
 from .errors import UnspecifiedClassError
 from .errors import VerificationError
 from .easyjwt import EasyJWT
@@ -24,6 +25,7 @@ __all__ = [
     'InvalidClaimsBaseError',
     'InvalidClaimSetError',
     'InvalidClassError',
+    'MissingRequiredClaimsError',
     'UnspecifiedClassError',
     'VerificationError',
 ]

@@ -26,6 +26,9 @@ Errors
 .. autoclass:: easyjwt.CreationError
     :show-inheritance:
 
+.. autoclass:: easyjwt.MissingRequiredClaimsError
+    :show-inheritance:
+
 .. autoclass:: easyjwt.VerificationError
     :show-inheritance:
 

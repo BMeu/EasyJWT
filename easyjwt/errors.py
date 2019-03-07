@@ -42,6 +42,20 @@ class CreationError(EasyJWTError):
     """
     pass
 
+
+class MissingRequiredClaimsError(CreationError):
+    """
+        Raised if the creation of a token fails because non-optional claims are empty.
+    """
+
+    def __init__(self, missing_claims: Iterable[str]) -> None:
+        """
+            :param missing_claims: The names of the claims that are required but empty.
+        """
+
+        missing = '{' + ', '.join(missing_claims) + '}'
+        super().__init__(f'Required empty claims: {missing}')
+
 # endregion
 
 # region Verification Error

@@ -17,6 +17,7 @@ from easyjwt import EasyJWT
 from easyjwt import UnspecifiedClassError
 from easyjwt import InvalidClaimSetError
 from easyjwt import InvalidClassError
+from easyjwt import MissingRequiredClaimsError
 from easyjwt.restoration import restore_timestamp_to_datetime
 
 
@@ -66,7 +67,25 @@ class EasyJWTTest(TestCase):
     # create()
     # ========
 
-    def test_create_with_issued_at_date(self):
+    def test_create_failure_missing_required_claims(self):
+        """
+            Test creating a token if required claims are empty.
+
+            Expected Result: An `MissingRequiredClaimsError` error is raised.
+        """
+
+        # Unset the claim for the EasyJWT class which is always required.
+        easyjwt = EasyJWT(self.key)
+        easyjwt._easyjwt_class = None
+        self.assertTrue(easyjwt._is_claim('_easyjwt_class'))
+
+        with self.assertRaises(MissingRequiredClaimsError) as exception_cm:
+            token = easyjwt.create()
+            self.assertIsNone(token)
+
+        self.assertEqual('Required empty claims: {_easyjwt_class}', str(exception_cm.exception))
+
+    def test_create_success_with_issued_at_date(self):
         """
              Test creating a token with specifying an issued-at date.
 
@@ -85,7 +104,7 @@ class EasyJWTTest(TestCase):
         claim_set = decode(token, self.key, algorithms=easyjwt._get_decode_algorithms())
         self.assertIsNotNone(claim_set)
 
-    def test_create_without_issued_at_date(self):
+    def test_create_success_without_issued_at_date(self):
         """
              Test creating a token without specifying an issued-at date.
 
@@ -158,6 +177,37 @@ class EasyJWTTest(TestCase):
         )
         easyjwt = EasyJWT(self.key)
         self.assertDictEqual(claim_set, easyjwt._get_claim_set(with_empty_claims=True))
+
+    # _get_required_empty_claims()
+    # ============================
+
+    def test_get_required_empty_claims(self):
+        """
+            Test getting the claims that are required and empty.
+
+            Expected Result: Only the names of claims that are not optional, but have no value are returned.
+        """
+
+        easyjwt = EasyJWT(self.key)
+
+        # Assert there is an optional, empty claim. This claim is not included in the output.
+        self.assertIsNone(easyjwt.not_before_date)
+        self.assertTrue(easyjwt._is_optional_claim('nbf'))
+
+        # Set an optional claim. This claim is not included in the output.
+        easyjwt.expiration_date = self.expiration_date
+        self.assertTrue(easyjwt._is_optional_claim('exp'))
+
+        # Create a non-optional claim and set a value. This claim is not included in the output.
+        easyjwt.required = True
+        self.assertTrue(easyjwt._is_claim('required'))
+
+        # Create a non-optional, empty claim. This claim is included in the output.
+        required_empty_claim = 'required_empty'
+        easyjwt.required_empty = None
+        self.assertTrue(easyjwt._is_claim(required_empty_claim))
+
+        self.assertSetEqual({required_empty_claim}, easyjwt._get_required_empty_claims())
 
     # endregion
 

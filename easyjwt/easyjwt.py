@@ -22,6 +22,7 @@ from . import Algorithm
 from . import UnspecifiedClassError
 from . import InvalidClaimSetError
 from . import InvalidClassError
+from . import MissingRequiredClaimsError
 from .restoration import restore_timestamp_to_datetime
 
 
@@ -190,11 +191,14 @@ class EasyJWT(object):
 
     def create(self, issued_at: Optional[datetime] = None) -> str:
         """
-            Create the actual token from the :class:`EasyJWT` object.
+            Create the actual token from the :class:`EasyJWT` object. Empty optional claims will not be included in the
+            token. Empty non-optional claims will cause a :class:`MissingRequiredClaimsError`.
 
             :param issued_at: The date and time at which this token was issued. If not given, the current date and time
                               will be used. Must be given in UTC. Defaults to `None`.
             :return: The token represented by the current state of the object.
+            :raise MissingRequiredClaimsError: If instance variables that map to non-optional claims in the claim set
+                                               are empty.
         """
 
         # Set the issued-at date.
@@ -202,8 +206,12 @@ class EasyJWT(object):
         if self.issued_at_date is None:
             self.issued_at_date = datetime.utcnow()
 
+        # Fail if there are empty required claims.
+        missing_claims = self._get_required_empty_claims()
+        if len(missing_claims) > 0:
+            raise MissingRequiredClaimsError(missing_claims)
+
         # Encode the object.
-        # TODO: Fail if a non-optional claim is empty.
         claim_set = self._get_claim_set()
         token_bytes = jwt_encode(claim_set, self._key, algorithm=self.algorithm.value)
 
@@ -224,6 +232,16 @@ class EasyJWT(object):
         return {EasyJWT._map_instance_var_to_claim_name(name): value
                 for (name, value) in vars(self).items()
                 if self._is_claim(name) and (with_empty_claims or value is not None)
+                }
+
+    def _get_required_empty_claims(self) -> Set[str]:
+        """
+            Get all claims that are required but empty.
+
+            :return: A set of names of the claims that are not optional but have an empty value.
+        """
+        return {name for (name, value) in self._get_claim_set(with_empty_claims=True).items()
+                if not self._is_optional_claim(name) and value is None
                 }
 
     # endregion
