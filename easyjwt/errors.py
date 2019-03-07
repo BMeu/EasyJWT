@@ -96,7 +96,7 @@ class InvalidClaimSetError(InvalidClaimsBaseError):
     missing_claims: Set[str]
     """
         A set of the names of claims that are expected but missing in the claim set.
-        
+
         If no missing claims are given, this will be an empty set.
     """
 
@@ -141,7 +141,7 @@ class InvalidClassError(InvalidClaimsBaseError):
 
     actual_class: str
     """
-        The name of the class with which the token has been created. 
+        The name of the class with which the token has been created.
     """
 
     expected_class: str
