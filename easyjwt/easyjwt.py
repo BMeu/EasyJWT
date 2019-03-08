@@ -88,6 +88,7 @@ class EasyJWT(object):
     _instance_var_claim_name_mapping: ClassVar[bidict] = bidict(
         expiration_date='exp',
         issued_at_date='iat',
+        JWT_ID='jti',
         not_before_date='nbf',
         subject='sub',
     )
@@ -106,6 +107,7 @@ class EasyJWT(object):
     _optional_claims: ClassVar[Set[str]] = {
         'exp',
         'iat',
+        'jti',
         'nbf',
         'sub',
     }
@@ -161,6 +163,14 @@ class EasyJWT(object):
         Will be given in UTC.
     """
 
+    JWT_ID: Optional[str]
+    """
+        A unique identifier for the JWT. This instance variable is mapped to the registered claim ``jti``.
+        
+        This registered claim is not validated when verifying a token. The processing of this claim is up the
+        application.
+    """
+
     not_before_date: Optional[datetime]
     """
         The date and time before which this token will not be valid. This instance variable is mapped to the registered
@@ -206,6 +216,7 @@ class EasyJWT(object):
 
         self.expiration_date = None
         self.issued_at_date = None
+        self.JWT_ID = None
         self.not_before_date = None
         self.subject = None
 
