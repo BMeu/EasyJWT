@@ -89,6 +89,7 @@ class EasyJWT(object):
         expiration_date='exp',
         issued_at_date='iat',
         not_before_date='nbf',
+        subject='sub',
     )
     """
         A bidirectional mapping from the name of an instance variable to its name in the claim set (and vice versa).
@@ -106,6 +107,7 @@ class EasyJWT(object):
         'exp',
         'iat',
         'nbf',
+        'sub',
     }
     """
         Set of claims that are optional, i.e. that can be empty in the token's claim set without causing an error.
@@ -170,6 +172,14 @@ class EasyJWT(object):
         Must be given in UTC.
     """
 
+    subject: Optional[str]
+    """
+        The subject of the token. This instance variable is mapped to the registered claim ``sub``.
+        
+        This registered claim is not validated when verifying a token. The processing of this claim is up to the
+        application.
+    """
+
     _easyjwt_class: str
     """
         The name of the class creating the token.
@@ -197,6 +207,7 @@ class EasyJWT(object):
         self.expiration_date = None
         self.issued_at_date = None
         self.not_before_date = None
+        self.subject = None
 
     # endregion
 

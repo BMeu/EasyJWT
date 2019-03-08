@@ -40,6 +40,7 @@ class EasyJWTTest(TestCase):
         self.expiration_date = datetime.utcnow().replace(microsecond=0) + timedelta(minutes=15)
         self.issued_at_date = datetime.utcnow().replace(microsecond=0) + timedelta(minutes=1)
         self.not_before_date = datetime.utcnow().replace(microsecond=0) - timedelta(minutes=5)
+        self.subject = 'EasyJWT UnitTest'
 
     # endregion
 
@@ -63,6 +64,7 @@ class EasyJWTTest(TestCase):
         self.assertIsNone(easyjwt.expiration_date)
         self.assertIsNone(easyjwt.issued_at_date)
         self.assertIsNone(easyjwt.not_before_date)
+        self.assertIsNone(easyjwt.subject)
 
     # endregion
 
@@ -162,12 +164,14 @@ class EasyJWTTest(TestCase):
             exp=self.expiration_date,
             iat=self.issued_at_date,
             nbf=self.not_before_date,
+            sub=self.subject,
         )
 
         easyjwt = EasyJWT(self.key)
         easyjwt.expiration_date = self.expiration_date
         easyjwt.issued_at_date = self.issued_at_date
         easyjwt.not_before_date = self.not_before_date
+        easyjwt.subject = self.subject
 
         self.assertDictEqual(claim_set, easyjwt._get_claim_set())
 
@@ -198,6 +202,7 @@ class EasyJWTTest(TestCase):
             exp=None,
             iat=None,
             nbf=None,
+            sub=None,
         )
         easyjwt = EasyJWT(self.key)
         self.assertDictEqual(claim_set, easyjwt._get_claim_set(with_empty_claims=True))
@@ -399,6 +404,7 @@ class EasyJWTTest(TestCase):
         easyjwt_creation = EasyJWT(self.key)
         easyjwt_creation.expiration_date = self.expiration_date
         easyjwt_creation.not_before_date = self.not_before_date
+        easyjwt_creation.subject = self.subject
         token = easyjwt_creation.create()
 
         easyjwt_verification = EasyJWT.verify(token, self.key)
@@ -406,6 +412,7 @@ class EasyJWTTest(TestCase):
         self.assertEqual(easyjwt_creation._key, easyjwt_verification._key)
         self.assertEqual(easyjwt_creation.expiration_date, easyjwt_verification.expiration_date)
         self.assertEqual(easyjwt_creation.not_before_date, easyjwt_verification.not_before_date)
+        self.assertEqual(easyjwt_creation.subject, easyjwt_verification.subject)
         self.assertEqual(easyjwt_creation._easyjwt_class, easyjwt_verification._easyjwt_class)
 
     def test_verify_success_without_expiration_date_and_not_before_date(self):
@@ -416,6 +423,7 @@ class EasyJWTTest(TestCase):
         """
 
         easyjwt_creation = EasyJWT(self.key)
+        easyjwt_creation.subject = self.subject
         token = easyjwt_creation.create()
 
         easyjwt_verification = EasyJWT.verify(token, self.key)
@@ -423,6 +431,7 @@ class EasyJWTTest(TestCase):
         self.assertEqual(easyjwt_creation._key, easyjwt_verification._key)
         self.assertEqual(easyjwt_creation.expiration_date, easyjwt_verification.expiration_date)
         self.assertEqual(easyjwt_creation.not_before_date, easyjwt_verification.not_before_date)
+        self.assertEqual(easyjwt_creation.subject, easyjwt_verification.subject)
         self.assertEqual(easyjwt_creation._easyjwt_class, easyjwt_verification._easyjwt_class)
 
     # _get_claim_names()
@@ -435,7 +444,7 @@ class EasyJWTTest(TestCase):
             Expected Result: A set with the claim names for the `EasyJWT` class and all optional claims returned.
         """
 
-        claim_names = {'_easyjwt_class', 'exp', 'iat', 'nbf'}
+        claim_names = {'_easyjwt_class', 'exp', 'iat', 'nbf', 'sub'}
         easyjwt = EasyJWT(self.key)
         self.assertSetEqual(claim_names, easyjwt._get_claim_names())
 
@@ -541,6 +550,7 @@ class EasyJWTTest(TestCase):
             exp=exp_timestamp,
             iat=iat_timestamp,
             nbf=nbf_timestamp,
+            sub=self.subject,
         )
 
         easyjwt = EasyJWT(self.key)
@@ -548,6 +558,7 @@ class EasyJWTTest(TestCase):
         self.assertEqual(self.expiration_date, easyjwt.expiration_date)
         self.assertEqual(self.issued_at_date, easyjwt.issued_at_date)
         self.assertEqual(self.not_before_date, easyjwt.not_before_date)
+        self.assertEqual(self.subject, easyjwt.subject)
 
     def test_restore_claim_set_without_optional_claims(self):
         """
@@ -758,6 +769,15 @@ class EasyJWTTest(TestCase):
         self.assertNotIn(instance_var, EasyJWT._private_claims)
         self.assertTrue(EasyJWT._is_claim(instance_var))
 
+    def test_is_claim_subject(self):
+        """
+            Test if the instance variable for the subject is a claim.
+
+            Expected Result: `True`.
+        """
+
+        self.assertTrue(EasyJWT._is_claim('subject'))
+
     def test_is_claim_whitelist(self):
         """
             Test if the instance variables in the whitelist are claims.
@@ -828,6 +848,15 @@ class EasyJWTTest(TestCase):
         for claim in EasyJWT._optional_claims:
             self.assertTrue(EasyJWT._is_optional_claim(claim), f'{claim} unexpectedly is not optional')
 
+    def test_is_optional_claim_subject(self):
+        """
+            Test if the claim for the subject is optional.
+
+            Expected Result: `True`
+        """
+
+        self.assertTrue(EasyJWT._is_optional_claim('sub'))
+
     # _map_claim_name_to_instance_var()
     # =================================
 
@@ -857,6 +886,15 @@ class EasyJWTTest(TestCase):
         """
 
         self.assertEqual('not_before_date', EasyJWT._map_claim_name_to_instance_var('nbf'))
+
+    def test_map_claim_name_to_instance_var_subject(self):
+        """
+            Test that the subject is correctly mapped from claim name to instance variable.
+
+            Expected Result: The instance variable for the subject is returned.
+        """
+
+        self.assertEqual('subject', EasyJWT._map_claim_name_to_instance_var('sub'))
 
     def test_map_claim_name_to_instance_var_unmapped(self):
         """
@@ -898,6 +936,15 @@ class EasyJWTTest(TestCase):
         """
 
         self.assertEqual('nbf', EasyJWT._map_instance_var_to_claim_name('not_before_date'))
+
+    def test_map_instance_var_to_claim_name_subject(self):
+        """
+            Test that the subject is correctly mapped from instance variable to claim name.
+
+            Expected Result: The claim name for the subject is returned.
+        """
+
+        self.assertEqual('sub', EasyJWT._map_instance_var_to_claim_name('subject'))
 
     def test_map_instance_var_to_claim_name_unmapped(self):
         """
