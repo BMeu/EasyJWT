@@ -17,12 +17,27 @@ from datetime import datetime
 from bidict import bidict
 from jwt import decode as jwt_decode
 from jwt import encode as jwt_encode
+from jwt import DecodeError as JWT_DecodeError
+from jwt import ExpiredSignatureError as JWT_ExpiredSignatureError
+from jwt import ImmatureSignatureError as JWT_ImmatureSignatureError
+from jwt import InvalidAlgorithmError as JWT_InvalidAlgorithmError
+from jwt import InvalidIssuedAtError as JWT_InvalidIssuedAtError
+from jwt import InvalidSignatureError as JWT_InvalidSignatureError
+from jwt import InvalidTokenError as JWT_InvalidTokenError
+from jwt.exceptions import InvalidKeyError as JWT_InvalidKeyError
 
 from . import Algorithm
-from . import UnspecifiedClassError
+from . import ExpiredTokenError
+from . import ImmatureTokenError
 from . import InvalidClaimSetError
 from . import InvalidClassError
+from . import IncompatibleKeyError
+from . import InvalidIssuedAtError
+from . import InvalidSignatureError
 from . import MissingRequiredClaimsError
+from . import UnspecifiedClassError
+from . import UnsupportedAlgorithmError
+from . import VerificationError
 from .restoration import restore_timestamp_to_datetime
 
 
@@ -119,14 +134,13 @@ class EasyJWT(object):
 
     # region Instance Variables
 
-    # TODO: Mention the exception that will be raised if the verification fails.
     expiration_date: Optional[datetime]
     """
         The date and time at which this token will expire. This instance variable is mapped to the registered claim
         ``exp``.
 
         If this claim is included in a token and this token is verified after the date has passed, the verification
-        will fail.
+        will fail with an :class:`.ExpiredTokenError` error.
 
         Must be given in UTC.
     """
@@ -145,14 +159,13 @@ class EasyJWT(object):
         Will be given in UTC.
     """
 
-    # TODO: Mention the exception that will be raised if the verification fails.
     not_before_date: Optional[datetime]
     """
         The date and time before which this token will not be valid. This instance variable is mapped to the registered
         claim ``nbf``.
 
         If this claim is included in a token and this token is verified before the date has been reached, the
-        verification will fail.
+        verification will fail with an :class:`.ImmatureTokenError` error.
 
         Must be given in UTC.
     """
@@ -197,6 +210,8 @@ class EasyJWT(object):
             :param issued_at: The date and time at which this token was issued. If not given, the current date and time
                               will be used. Must be given in UTC. Defaults to `None`.
             :return: The token represented by the current state of the object.
+            :raise IncompatibleKeyError: If the given key is incompatible with the algorithm used for encoding the
+                                         token.
             :raise MissingRequiredClaimsError: If instance variables that map to non-optional claims in the claim set
                                                are empty.
         """
@@ -213,7 +228,10 @@ class EasyJWT(object):
 
         # Encode the object.
         claim_set = self._get_claim_set()
-        token_bytes = jwt_encode(claim_set, self._key, algorithm=self.algorithm.value)
+        try:
+            token_bytes = jwt_encode(claim_set, self._key, algorithm=self.algorithm.value)
+        except JWT_InvalidKeyError as error:
+            raise IncompatibleKeyError(str(error))
 
         # The encoded claim set is a bytestream. Create a UTF-8 string.
         token = token_bytes.decode('utf-8')
@@ -258,16 +276,48 @@ class EasyJWT(object):
                         created.
             :return: The object representing the token. The claim values are set on the corresponding instance
                      variables.
-            :raise InvalidClaimsBaseError: If the given token's claim set is invalid.
+            :raise ExpiredTokenError: If the claim set contains an expiration date claim ``exp`` that has passed.
+            :raise ImmatureTokenError: If the claim set contains a not-before date claim ``nbf`` that has not yet been
+                                       reached.
+            :raise IncompatibleKeyError: If the given key is incompatible with the algorithm used for decoding the
+                                         token.
+            :raise InvalidClaimSetError: If the claim set does not contain exactly the expected (non-optional) claims.
+            :raise InvalidClassError: If the claim set is not verified with the class with which the token has been
+                                      created.
+            :raise InvalidIssuedAtError: If the claim set contains an issued-at date ``iat`` that is not an integer.
+            :raise InvalidSignatureError: If the token's signature does not validate the token's contents.
+            :raise UnspecifiedClassError: If the claim set does not contain the class with which the token has been
+                                          created.
+            :raise UnsupportedAlgorithmError: If the algorithm used for encoding the token is not supported.
+            :raise VerificationError: If a general error occurred during decoding.
         """
-        # TODO: List all errors in the docstring.
 
         # Create an object for the token.
         easyjwt = cls(key)
 
-        # Decode the given token.
+        # Decode the given token and raise own errors for a clean interface.
         algorithms = easyjwt._get_decode_algorithms()
-        claim_set = jwt_decode(token, easyjwt._key, algorithms=algorithms)
+
+        # TODO: When implementing the audience, check for TypeError (api_jwt.py, line 121).
+        # TODO: When implementing the audience, check for MissingRequiredClaim (api_jwt.py, line 184).
+        # TODO: When implementing the issuer, check for MissingRequiredClaim (api_jwt.py, line 211).
+
+        try:
+            claim_set = jwt_decode(token, easyjwt._key, algorithms=algorithms)
+        except JWT_ExpiredSignatureError:
+            raise ExpiredTokenError()
+        except JWT_ImmatureSignatureError:
+            raise ImmatureTokenError()
+        except JWT_InvalidAlgorithmError:
+            raise UnsupportedAlgorithmError()
+        except JWT_InvalidIssuedAtError:
+            raise InvalidIssuedAtError()
+        except JWT_InvalidKeyError as error:
+            raise IncompatibleKeyError(str(error))
+        except JWT_InvalidSignatureError:
+            raise InvalidSignatureError()
+        except (JWT_InvalidTokenError, JWT_DecodeError) as error:
+            raise VerificationError(str(error))
 
         # Verify and restore the token.
         easyjwt._verify_claim_set(claim_set)
@@ -338,11 +388,11 @@ class EasyJWT(object):
 
             :param claim_set: The claim set to verify.
             :return: `True` if the claim set contains all expected claims and is of this class, `False` otherwise.
-            :raise UnspecifiedClassError: If the claim set does not contain the class with which the token has been
-                                          created.
             :raise InvalidClaimSetError: If the claim set does not contain exactly the expected (non-optional) claims.
             :raise InvalidClassError: If the claim set is not verified with the class with which the token has been
                                       created.
+            :raise UnspecifiedClassError: If the claim set does not contain the class with which the token has been
+                                          created.
         """
 
         # Check the token's class: it must be specified and be this class.

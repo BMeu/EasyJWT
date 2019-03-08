@@ -11,9 +11,10 @@ from .errors import CreationError
 from .errors import EasyJWTError
 from .errors import ExpiredTokenError
 from .errors import ImmatureTokenError
+from .errors import IncompatibleKeyError
 from .errors import InvalidClaimSetError
 from .errors import InvalidClassError
-from .errors import InvalidKeyError
+from .errors import InvalidIssuedAtError
 from .errors import InvalidSignatureError
 from .errors import MissingRequiredClaimsError
 from .errors import UnspecifiedClassError
@@ -28,9 +29,10 @@ __all__ = [
     'EasyJWTError',
     'ExpiredTokenError',
     'ImmatureTokenError',
+    'IncompatibleKeyError',
     'InvalidClaimSetError',
     'InvalidClassError',
-    'InvalidKeyError',
+    'InvalidIssuedAtError',
     'InvalidSignatureError',
     'MissingRequiredClaimsError',
     'UnspecifiedClassError',

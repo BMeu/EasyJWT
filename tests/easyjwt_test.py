@@ -8,16 +8,20 @@ from datetime import timedelta
 from datetime import timezone
 
 from jwt import decode
-from jwt import ExpiredSignatureError
-from jwt import ImmatureSignatureError
-from jwt import InvalidSignatureError
 
 from easyjwt import Algorithm
 from easyjwt import EasyJWT
-from easyjwt import UnspecifiedClassError
+from easyjwt import ExpiredTokenError
+from easyjwt import ImmatureTokenError
+from easyjwt import IncompatibleKeyError
 from easyjwt import InvalidClaimSetError
 from easyjwt import InvalidClassError
+from easyjwt import InvalidIssuedAtError
+from easyjwt import InvalidSignatureError
 from easyjwt import MissingRequiredClaimsError
+from easyjwt import UnspecifiedClassError
+from easyjwt import UnsupportedAlgorithmError
+from easyjwt import VerificationError
 from easyjwt.restoration import restore_timestamp_to_datetime
 
 
@@ -66,6 +70,26 @@ class EasyJWTTest(TestCase):
 
     # create()
     # ========
+
+    def test_create_failure_incompatible_key(self):
+        """
+            Test creating a token using an incompatible key.
+
+            Expected Result: An `IncompatibleKeyError` error is raised.
+        """
+
+        # Ensure that the algorithm needs an HMAC key. Provide a asymmetric key instead.
+        incompatible_key = '-----BEGIN PUBLIC KEY-----'
+        self.assertIn(EasyJWT.algorithm, {Algorithm.HS256, Algorithm.HS384, Algorithm.HS512})
+
+        easyjwt = EasyJWT(incompatible_key)
+
+        with self.assertRaises(IncompatibleKeyError) as exception_cm:
+            token = easyjwt.create()
+            self.assertIsNone(token)
+
+        message = 'The specified key is an asymmetric key or x509 certificate and should not be used as an HMAC secret.'
+        self.assertEqual(message, str(exception_cm.exception))
 
     def test_create_failure_missing_required_claims(self):
         """
@@ -220,7 +244,7 @@ class EasyJWTTest(TestCase):
         """
             Test verifying an expired token.
 
-            Expected Result: An `ExpiredSignatureError` error is raised.
+            Expected Result: An `ExpiredTokenError` error is raised.
         """
 
         easyjwt_creation = EasyJWT(self.key)
@@ -228,10 +252,30 @@ class EasyJWTTest(TestCase):
 
         token = easyjwt_creation.create()
 
-        # TODO: Update docstring when changing the error.
-        with self.assertRaises(ExpiredSignatureError):
+        with self.assertRaises(ExpiredTokenError):
             easyjwt_verification = EasyJWT.verify(token, self.key)
             self.assertIsNone(easyjwt_verification)
+
+    def test_verify_failure_incompatible_key(self):
+        """
+            Test verifying a token using an incompatible key.
+
+            Expected Result: An `IncompatibleKeyError` error is raised.
+        """
+
+        # Ensure that the algorithm needs an HMAC key. Provide a asymmetric key instead.
+        incompatible_key = '-----BEGIN PUBLIC KEY-----'
+        self.assertIn(EasyJWT.algorithm, {Algorithm.HS256, Algorithm.HS384, Algorithm.HS512})
+
+        easyjwt_creation = EasyJWT(self.key)
+        token = easyjwt_creation.create()
+
+        with self.assertRaises(IncompatibleKeyError) as exception_cm:
+            easyjwt_verification = EasyJWT.verify(token, incompatible_key)
+            self.assertIsNone(easyjwt_verification)
+
+        message = 'The specified key is an asymmetric key or x509 certificate and should not be used as an HMAC secret.'
+        self.assertEqual(message, str(exception_cm.exception))
 
     def test_verify_failure_invalid_claim_set(self):
         """
@@ -255,7 +299,22 @@ class EasyJWTTest(TestCase):
 
         self.assertIn(fake_claim, str(exception_cm.exception))
 
-    def test_verify_failure_invalid_key(self):
+    def test_verify_failure_invalid_issued_at(self):
+        """
+            Test verifying a token with an invalid issued-at date.
+
+            Expected Result: An `InvalidIssuedAtError` is raised.
+        """
+
+        easyjwt_creation = EasyJWT(self.key)
+        # noinspection PyTypeChecker
+        token = easyjwt_creation.create(issued_at='NaN')
+
+        with self.assertRaises(InvalidIssuedAtError):
+            easyjwt_verification = EasyJWT.verify(token, self.key)
+            self.assertIsNone(easyjwt_verification)
+
+    def test_verify_failure_invalid_signature(self):
         """
             Test verifying a token using an invalid key.
 
@@ -263,10 +322,8 @@ class EasyJWTTest(TestCase):
         """
 
         easyjwt_creation = EasyJWT(self.key)
-
         token = easyjwt_creation.create()
 
-        # TODO: Update docstring when changing the error.
         key = 'invalid-' + self.key
         with self.assertRaises(InvalidSignatureError):
             easyjwt_verification = EasyJWT.verify(token, key)
@@ -276,7 +333,7 @@ class EasyJWTTest(TestCase):
         """
             Test verifying a token that is not yet valid.
 
-            Expected Result: An `ImmatureSignatureError` error is raised.
+            Expected Result: An `ImmatureTokenError` error is raised.
         """
 
         easyjwt_creation = EasyJWT(self.key)
@@ -284,10 +341,53 @@ class EasyJWTTest(TestCase):
 
         token = easyjwt_creation.create()
 
-        # TODO: Update docstring when changing the error.
-        with self.assertRaises(ImmatureSignatureError):
+        with self.assertRaises(ImmatureTokenError):
             easyjwt_verification = EasyJWT.verify(token, self.key)
             self.assertIsNone(easyjwt_verification)
+
+    def test_verify_failure_unsupported_algorithm(self):
+        """
+            Test verifying a token with an incompatible algorithm.
+
+            Expected Result: An `UnsupportedAlgorithmError` is raised.
+        """
+
+        # Save the default algorithm to restore it later.
+        encoding_algorithm = EasyJWT.algorithm
+
+        easyjwt_creation = EasyJWT(self.key)
+        token = easyjwt_creation.create()
+
+        # Change the algorithm for now so that the one used for creation is not supported.
+        EasyJWT.algorithm = Algorithm.HS512
+        self.assertNotEqual(encoding_algorithm, EasyJWT.algorithm)
+
+        # Try to verify the token.
+        with self.assertRaises(UnsupportedAlgorithmError):
+            easyjwt_verification = EasyJWT.verify(token, self.key)
+            self.assertIsNone(easyjwt_verification)
+
+        # Restore the default algorithm on the class to prevent side effect on other parts of the tests.
+        EasyJWT.algorithm = encoding_algorithm
+
+    def test_verify_failure_verification_error(self):
+        """
+            Test verifying a token with an expiration date claim that is not an integer.
+
+            Expected Result: A `VerificationError` is raised.
+        """
+
+        # Create the token with a string expiration date.
+        easyjwt_creation = EasyJWT(self.key)
+        easyjwt_creation.expiration_date = 'January 1, 2019 12:34.56'
+        token = easyjwt_creation.create()
+
+        # Try to verify the token.
+        with self.assertRaises(VerificationError) as exception_cm:
+            easyjwt_verification = EasyJWT.verify(token, self.key)
+            self.assertIsNone(easyjwt_verification)
+
+        self.assertEqual('Expiration Time claim (exp) must be an integer.', str(exception_cm.exception))
 
     def test_verify_success_with_expiration_date_and_not_before_date(self):
         """

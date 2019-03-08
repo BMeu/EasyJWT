@@ -32,6 +32,14 @@ class EasyJWTError(Exception):
         """
         return self._message
 
+
+class IncompatibleKeyError(EasyJWTError):
+    """
+        Raised if the creation or verification of a token fails because the given key is incompatible with the used
+        algorithm.
+    """
+    pass
+
 # endregion
 
 # region Creation Errors
@@ -89,7 +97,7 @@ class ExpiredTokenError(VerificationError):
 
 class ImmatureTokenError(VerificationError):
     """
-        Raised if the verification of a token fails because the included not-before date has not been reached yet.
+        Raised if the verification of a token fails because the included not-before date has not yet been reached.
     """
 
     def __init__(self) -> None:
@@ -170,18 +178,18 @@ class InvalidClassError(VerificationError):
         super().__init__(f'Expected class {expected_class}. Got class {actual_class}')
 
 
-class InvalidKeyError(VerificationError):
+class InvalidIssuedAtError(VerificationError):
     """
-        Raised if the verification of token fails because the key used for decoding the token is invalid.
+        Raised if the verification of a token fails because the key used for decoding the token is invalid.
     """
 
     def __init__(self) -> None:
-        super().__init__('Invalid key')
+        super().__init__('Invalid issued-at date')
 
 
 class InvalidSignatureError(VerificationError):
     """
-        Raised if the verification of token fails because the token's signature does not validate the token's content.
+        Raised if the verification of a token fails because the token's signature does not validate the token's content.
     """
 
     def __init__(self) -> None:

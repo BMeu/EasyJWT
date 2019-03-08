@@ -3,7 +3,9 @@ API
 
 .. automodule:: easyjwt
 
-TODO: Include TOC of this page.
+.. contents:: Contents
+    :backlinks: top
+    :local:
 
 Classes
 -------
@@ -35,7 +37,14 @@ This section lists all error classes defined by |project|.
 Creation Errors
 ~~~~~~~~~~~~~~~
 
+This section lists all error classed defined by |project| that may be raised during the creation of a token. Note that
+some error classes may also listed below `Verification Errors`_.
+
 .. autoclass:: easyjwt.CreationError
+    :members:
+    :show-inheritance:
+
+.. autoclass:: easyjwt.IncompatibleKeyError
     :members:
     :show-inheritance:
 
@@ -45,6 +54,9 @@ Creation Errors
 
 Verification Errors
 ~~~~~~~~~~~~~~~~~~~
+
+This section lists all error classed defined by |project| that may be raised during the verification of a token. Note
+that some error classes may also listed below `Creation Errors`_.
 
 .. autoclass:: easyjwt.VerificationError
     :members:
@@ -58,6 +70,10 @@ Verification Errors
     :members:
     :show-inheritance:
 
+.. autoclass:: easyjwt.IncompatibleKeyError
+    :members:
+    :show-inheritance:
+
 .. autoclass:: easyjwt.InvalidClaimSetError
     :members:
     :show-inheritance:
@@ -66,7 +82,7 @@ Verification Errors
     :members:
     :show-inheritance:
 
-.. autoclass:: easyjwt.InvalidKeyError
+.. autoclass:: easyjwt.InvalidIssuedAtError
     :members:
     :show-inheritance:
 
