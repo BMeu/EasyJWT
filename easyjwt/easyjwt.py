@@ -166,7 +166,7 @@ class EasyJWT(object):
     JWT_ID: Optional[str]
     """
         A unique identifier for the JWT. This instance variable is mapped to the registered claim ``jti``.
-        
+
         This registered claim is not validated when verifying a token. The processing of this claim is up the
         application.
     """
@@ -185,7 +185,7 @@ class EasyJWT(object):
     subject: Optional[str]
     """
         The subject of the token. This instance variable is mapped to the registered claim ``sub``.
-        
+
         This registered claim is not validated when verifying a token. The processing of this claim is up to the
         application.
     """
