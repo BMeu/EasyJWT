@@ -17,6 +17,7 @@ from easyjwt import IncompatibleKeyError
 from easyjwt import InvalidClaimSetError
 from easyjwt import InvalidClassError
 from easyjwt import InvalidIssuedAtError
+from easyjwt import InvalidIssuerError
 from easyjwt import InvalidSignatureError
 from easyjwt import MissingRequiredClaimsError
 from easyjwt import UnspecifiedClassError
@@ -39,6 +40,7 @@ class EasyJWTTest(TestCase):
         # Do not use microseconds.
         self.expiration_date = datetime.utcnow().replace(microsecond=0) + timedelta(minutes=15)
         self.issued_at_date = datetime.utcnow().replace(microsecond=0) + timedelta(minutes=1)
+        self.issuer = 'Issued by EasyJWT'
         self.JWT_ID = 'JSON Web Token Unique Identifier'
         self.not_before_date = datetime.utcnow().replace(microsecond=0) - timedelta(minutes=5)
         self.subject = 'EasyJWT UnitTest'
@@ -64,6 +66,7 @@ class EasyJWTTest(TestCase):
 
         self.assertIsNone(easyjwt.expiration_date)
         self.assertIsNone(easyjwt.issued_at_date)
+        self.assertIsNone(easyjwt.issuer)
         self.assertIsNone(easyjwt.JWT_ID)
         self.assertIsNone(easyjwt.not_before_date)
         self.assertIsNone(easyjwt.subject)
@@ -122,7 +125,10 @@ class EasyJWTTest(TestCase):
 
         easyjwt = EasyJWT(self.key)
         easyjwt.expiration_date = self.expiration_date
+        easyjwt.issuer = self.issuer
+        easyjwt.JWT_ID = self.JWT_ID
         easyjwt.not_before_date = self.not_before_date
+        easyjwt.subject = self.subject
 
         token = easyjwt.create(self.issued_at_date)
         self.assertIsNotNone(token)
@@ -141,7 +147,10 @@ class EasyJWTTest(TestCase):
 
         easyjwt = EasyJWT(self.key)
         easyjwt.expiration_date = self.expiration_date
+        easyjwt.issuer = self.issuer
+        easyjwt.JWT_ID = self.JWT_ID
         easyjwt.not_before_date = self.not_before_date
+        easyjwt.subject = self.subject
 
         token = easyjwt.create()
         self.assertIsNotNone(token)
@@ -165,6 +174,7 @@ class EasyJWTTest(TestCase):
             _easyjwt_class='EasyJWT',
             exp=self.expiration_date,
             iat=self.issued_at_date,
+            iss=self.issuer,
             jti=self.JWT_ID,
             nbf=self.not_before_date,
             sub=self.subject,
@@ -172,8 +182,9 @@ class EasyJWTTest(TestCase):
 
         easyjwt = EasyJWT(self.key)
         easyjwt.expiration_date = self.expiration_date
-        easyjwt.JWT_ID = self.JWT_ID
         easyjwt.issued_at_date = self.issued_at_date
+        easyjwt.issuer = self.issuer
+        easyjwt.JWT_ID = self.JWT_ID
         easyjwt.not_before_date = self.not_before_date
         easyjwt.subject = self.subject
 
@@ -205,6 +216,7 @@ class EasyJWTTest(TestCase):
             _easyjwt_class='EasyJWT',
             exp=None,
             iat=None,
+            iss=None,
             jti=None,
             nbf=None,
             sub=None,
@@ -324,6 +336,22 @@ class EasyJWTTest(TestCase):
             easyjwt_verification = EasyJWT.verify(token, self.key)
             self.assertIsNone(easyjwt_verification)
 
+    def test_verify_failure_invalid_issuer(self):
+        """
+            Test verifying a token with an invalid issuer.
+
+            Expected Result: An `InvalidIssuerError` is raised.
+        """
+
+        easyjwt_creation = EasyJWT(self.key)
+        easyjwt_creation.issuer = self.issuer
+        token = easyjwt_creation.create()
+
+        invalid_issuer = 'Impersonating ' + self.issuer
+        with self.assertRaises(InvalidIssuerError):
+            easyjwt_verification = EasyJWT.verify(token, self.key, issuer=invalid_issuer)
+            self.assertIsNone(easyjwt_verification)
+
     def test_verify_failure_invalid_signature(self):
         """
             Test verifying a token using an invalid key.
@@ -338,6 +366,22 @@ class EasyJWTTest(TestCase):
         with self.assertRaises(InvalidSignatureError):
             easyjwt_verification = EasyJWT.verify(token, key)
             self.assertIsNone(easyjwt_verification)
+
+    def test_verify_failure_missing_issuer(self):
+        """
+            Test verifying a token without giving an issuer.
+
+            Expected Result: An `InvalidIssuerError` is raised.
+        """
+
+        easyjwt_creation = EasyJWT(self.key)
+        token = easyjwt_creation.create()
+
+        with self.assertRaises(InvalidClaimSetError) as exception_cm:
+            easyjwt_verification = EasyJWT.verify(token, self.key, issuer=self.issuer)
+            self.assertIsNone(easyjwt_verification)
+
+        self.assertSetEqual({'issuer'}, exception_cm.exception.missing_claims)
 
     def test_verify_failure_not_yet_valid_token(self):
         """
@@ -399,32 +443,37 @@ class EasyJWTTest(TestCase):
 
         self.assertEqual('Expiration Time claim (exp) must be an integer.', str(exception_cm.exception))
 
-    def test_verify_success_with_expiration_date_and_not_before_date(self):
+    def test_verify_success_with_validated_registered_claims(self):
         """
-            Test verifying a valid token with valid expiration and not-before dates, using the correct key.
+            Test verifying a valid token with valid registered claims that are validated (exp, iss, nbf), using the
+            correct key.
 
             Expected Result: An object representing the token is returned.
         """
 
         easyjwt_creation = EasyJWT(self.key)
         easyjwt_creation.expiration_date = self.expiration_date
+        easyjwt_creation.issuer = self.issuer
         easyjwt_creation.JWT_ID = self.JWT_ID
         easyjwt_creation.not_before_date = self.not_before_date
         easyjwt_creation.subject = self.subject
         token = easyjwt_creation.create()
 
-        easyjwt_verification = EasyJWT.verify(token, self.key)
+        easyjwt_verification = EasyJWT.verify(token, self.key, issuer=self.issuer)
         self.assertIsNotNone(easyjwt_verification)
         self.assertEqual(easyjwt_creation._key, easyjwt_verification._key)
         self.assertEqual(easyjwt_creation.expiration_date, easyjwt_verification.expiration_date)
+        self.assertEqual(easyjwt_creation.issued_at_date, easyjwt_verification.issued_at_date)
+        self.assertEqual(easyjwt_creation.issuer, easyjwt_verification.issuer)
         self.assertEqual(easyjwt_creation.JWT_ID, easyjwt_verification.JWT_ID)
         self.assertEqual(easyjwt_creation.not_before_date, easyjwt_verification.not_before_date)
         self.assertEqual(easyjwt_creation.subject, easyjwt_verification.subject)
         self.assertEqual(easyjwt_creation._easyjwt_class, easyjwt_verification._easyjwt_class)
 
-    def test_verify_success_without_expiration_date_and_not_before_date(self):
+    def test_verify_success_without_validated_registered_claims(self):
         """
-            Test verifying a valid token without an expiration date and a not-before date, using the correct key.
+            Test verifying a valid token without registered claims that are validated (exp, iss, nbf), using the correct
+            key.
 
             Expected Result: An object representing the token is returned.
         """
@@ -438,6 +487,8 @@ class EasyJWTTest(TestCase):
         self.assertIsNotNone(easyjwt_verification)
         self.assertEqual(easyjwt_creation._key, easyjwt_verification._key)
         self.assertEqual(easyjwt_creation.expiration_date, easyjwt_verification.expiration_date)
+        self.assertEqual(easyjwt_creation.issued_at_date, easyjwt_verification.issued_at_date)
+        self.assertEqual(easyjwt_creation.issuer, easyjwt_verification.issuer)
         self.assertEqual(easyjwt_creation.JWT_ID, easyjwt_verification.JWT_ID)
         self.assertEqual(easyjwt_creation.not_before_date, easyjwt_verification.not_before_date)
         self.assertEqual(easyjwt_creation.subject, easyjwt_verification.subject)
@@ -453,7 +504,7 @@ class EasyJWTTest(TestCase):
             Expected Result: A set with the claim names for the `EasyJWT` class and all optional claims returned.
         """
 
-        claim_names = {'_easyjwt_class', 'exp', 'iat', 'jti', 'nbf', 'sub'}
+        claim_names = {'_easyjwt_class', 'exp', 'iat', 'iss', 'jti', 'nbf', 'sub'}
         easyjwt = EasyJWT(self.key)
         self.assertSetEqual(claim_names, easyjwt._get_claim_names())
 
@@ -558,6 +609,7 @@ class EasyJWTTest(TestCase):
             _easyjwt_class='EasyJWT',
             exp=exp_timestamp,
             iat=iat_timestamp,
+            iss=self.issuer,
             jti=self.JWT_ID,
             nbf=nbf_timestamp,
             sub=self.subject,
@@ -567,6 +619,7 @@ class EasyJWTTest(TestCase):
         easyjwt._restore_claim_set(claim_set)
         self.assertEqual(self.expiration_date, easyjwt.expiration_date)
         self.assertEqual(self.issued_at_date, easyjwt.issued_at_date)
+        self.assertEqual(self.issuer, easyjwt.issuer)
         self.assertEqual(self.JWT_ID, easyjwt.JWT_ID)
         self.assertEqual(self.not_before_date, easyjwt.not_before_date)
         self.assertEqual(self.subject, easyjwt.subject)
@@ -587,6 +640,7 @@ class EasyJWTTest(TestCase):
         easyjwt._restore_claim_set(claim_set)
         self.assertIsNone(easyjwt.expiration_date)
         self.assertIsNone(easyjwt.issued_at_date)
+        self.assertIsNone(easyjwt.issuer)
         self.assertIsNone(easyjwt.JWT_ID)
         self.assertIsNone(easyjwt.not_before_date)
         self.assertIsNone(easyjwt.subject)
@@ -699,6 +753,7 @@ class EasyJWTTest(TestCase):
         easyjwt = EasyJWT(self.key)
         easyjwt.expiration_date = self.expiration_date
         easyjwt.issued_at_date = self.issued_at_date
+        easyjwt.issuer = self.issuer
         easyjwt.JWT_ID = self.JWT_ID
         easyjwt.not_before_date = self.not_before_date
         easyjwt.subject = self.subject
@@ -752,6 +807,15 @@ class EasyJWTTest(TestCase):
         """
 
         self.assertTrue(EasyJWT._is_claim('issued_at_date'))
+
+    def test_is_claim_issuer(self):
+        """
+            Test if the instance variable for the issuer is a claim.
+
+            Expected Result: `True`.
+        """
+
+        self.assertTrue(EasyJWT._is_claim('issuer'))
 
     def test_is_claim_JWT_ID(self):
         """
@@ -842,6 +906,15 @@ class EasyJWTTest(TestCase):
 
         self.assertTrue(EasyJWT._is_optional_claim('iat'))
 
+    def test_is_optional_claim_issuer(self):
+        """
+            Test if the claim for the issuer is optional.
+
+            Expected Result: `True`
+        """
+
+        self.assertTrue(EasyJWT._is_optional_claim('iss'))
+
     def test_is_optional_claim_JWT_ID(self):
         """
             Test if the claim for the JWT ID is optional.
@@ -911,6 +984,15 @@ class EasyJWTTest(TestCase):
 
         self.assertEqual('issued_at_date', EasyJWT._map_claim_name_to_instance_var('iat'))
 
+    def test_map_claim_name_to_instance_var_issuer(self):
+        """
+            Test that the issuer is correctly mapped from claim name to instance variable.
+
+            Expected Result: The instance variable for the issuer is returned.
+        """
+
+        self.assertEqual('issuer', EasyJWT._map_claim_name_to_instance_var('iss'))
+
     def test_map_claim_name_to_instance_var_JWT_ID(self):
         """
             Test that the JWT ID is correctly mapped from claim name to instance variable.
@@ -969,6 +1051,15 @@ class EasyJWTTest(TestCase):
         """
 
         self.assertEqual('iat', EasyJWT._map_instance_var_to_claim_name('issued_at_date'))
+
+    def test_map_instance_var_to_claim_name_issuer(self):
+        """
+            Test that the issuer date is correctly mapped from instance variable to claim name.
+
+            Expected Result: The claim name for the issuer is returned.
+        """
+
+        self.assertEqual('iss', EasyJWT._map_instance_var_to_claim_name('issuer'))
 
     def test_map_instance_var_to_claim_name_JWT_ID(self):
         """

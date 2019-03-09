@@ -22,8 +22,10 @@ from jwt import ExpiredSignatureError as JWT_ExpiredSignatureError
 from jwt import ImmatureSignatureError as JWT_ImmatureSignatureError
 from jwt import InvalidAlgorithmError as JWT_InvalidAlgorithmError
 from jwt import InvalidIssuedAtError as JWT_InvalidIssuedAtError
+from jwt import InvalidIssuerError as JWT_InvalidIssuerError
 from jwt import InvalidSignatureError as JWT_InvalidSignatureError
 from jwt import InvalidTokenError as JWT_InvalidTokenError
+from jwt import MissingRequiredClaimError as JWT_MissingRequiredClaimError
 from jwt.exceptions import InvalidKeyError as JWT_InvalidKeyError
 
 from . import Algorithm
@@ -33,6 +35,7 @@ from . import InvalidClaimSetError
 from . import InvalidClassError
 from . import IncompatibleKeyError
 from . import InvalidIssuedAtError
+from . import InvalidIssuerError
 from . import InvalidSignatureError
 from . import MissingRequiredClaimsError
 from . import UnspecifiedClassError
@@ -88,6 +91,7 @@ class EasyJWT(object):
     _instance_var_claim_name_mapping: ClassVar[bidict] = bidict(
         expiration_date='exp',
         issued_at_date='iat',
+        issuer='iss',
         JWT_ID='jti',
         not_before_date='nbf',
         subject='sub',
@@ -107,6 +111,7 @@ class EasyJWT(object):
     _optional_claims: ClassVar[Set[str]] = {
         'exp',
         'iat',
+        'iss',
         'jti',
         'nbf',
         'sub',
@@ -163,6 +168,16 @@ class EasyJWT(object):
         Will be given in UTC.
     """
 
+    issuer: Optional[str]
+    """
+        The issuer of this token. This instance variable is mapped to the registered claim ``iss``.
+
+        The issuer of a token can be verified by passing the expected issuer to the :meth:`verify` method. If the issuer
+        specified in the token does not match the expected one, an :class:`.InvalidIssuerError` error will be raised.
+        If the token does not contain an issuer if one is expected, an :class:`.InvalidClaimSetError` error will be
+        raised.
+    """
+
     JWT_ID: Optional[str]
     """
         A unique identifier for the JWT. This instance variable is mapped to the registered claim ``jti``.
@@ -216,6 +231,7 @@ class EasyJWT(object):
 
         self.expiration_date = None
         self.issued_at_date = None
+        self.issuer = None
         self.JWT_ID = None
         self.not_before_date = None
         self.subject = None
@@ -241,7 +257,7 @@ class EasyJWT(object):
         # Set the issued-at date.
         self.issued_at_date = issued_at
         if self.issued_at_date is None:
-            self.issued_at_date = datetime.utcnow()
+            self.issued_at_date = datetime.utcnow().replace(microsecond=0)
 
         # Fail if there are empty required claims.
         missing_claims = self._get_required_empty_claims()
@@ -289,13 +305,14 @@ class EasyJWT(object):
     # region Token Restoration
 
     @classmethod
-    def verify(cls, token: str, key: str) -> 'EasyJWT':
+    def verify(cls, token: str, key: str, issuer: Optional[str] = None) -> 'EasyJWT':
         """
             Verify the given JSON Web Token.
 
             :param token: The JWT to verify.
             :param key: The key used for decoding the token. This key must be the same with which the token has been
                         created.
+            :param issuer: The issuer of the token to verify.
             :return: The object representing the token. The claim values are set on the corresponding instance
                      variables.
             :raise ExpiredTokenError: If the claim set contains an expiration date claim ``exp`` that has passed.
@@ -307,6 +324,7 @@ class EasyJWT(object):
             :raise InvalidClassError: If the claim set is not verified with the class with which the token has been
                                       created.
             :raise InvalidIssuedAtError: If the claim set contains an issued-at date ``iat`` that is not an integer.
+            :raise InvalidIssuerError: If the token has been issued by a different issuer than given.
             :raise InvalidSignatureError: If the token's signature does not validate the token's contents.
             :raise UnspecifiedClassError: If the claim set does not contain the class with which the token has been
                                           created.
@@ -322,22 +340,35 @@ class EasyJWT(object):
 
         # TODO: When implementing the audience, check for TypeError (api_jwt.py, line 121).
         # TODO: When implementing the audience, check for MissingRequiredClaim (api_jwt.py, line 184).
-        # TODO: When implementing the issuer, check for MissingRequiredClaim (api_jwt.py, line 211).
 
         try:
-            claim_set = jwt_decode(token, easyjwt._key, algorithms=algorithms)
+            claim_set = jwt_decode(token, easyjwt._key, algorithms=algorithms, issuer=issuer)
+
         except JWT_ExpiredSignatureError:
             raise ExpiredTokenError()
+
         except JWT_ImmatureSignatureError:
             raise ImmatureTokenError()
+
         except JWT_InvalidAlgorithmError:
             raise UnsupportedAlgorithmError()
+
         except JWT_InvalidIssuedAtError:
             raise InvalidIssuedAtError()
+
+        except JWT_InvalidIssuerError:
+            raise InvalidIssuerError()
+
         except JWT_InvalidKeyError as error:
             raise IncompatibleKeyError(str(error))
+
         except JWT_InvalidSignatureError:
             raise InvalidSignatureError()
+
+        except JWT_MissingRequiredClaimError as error:
+            # Map the missing claims to their instance variable names.
+            raise InvalidClaimSetError(missing_claims={easyjwt._map_claim_name_to_instance_var(error.claim)})
+
         except (JWT_InvalidTokenError, JWT_DecodeError) as error:
             raise VerificationError(str(error))
 

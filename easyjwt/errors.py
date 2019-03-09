@@ -187,6 +187,15 @@ class InvalidIssuedAtError(VerificationError):
         super().__init__('Invalid issued-at date')
 
 
+class InvalidIssuerError(VerificationError):
+    """
+        Raised if the verification of a token fails because the given issuer is not the issuer of the token.
+    """
+
+    def __init__(self) -> None:
+        super().__init__('Invalid issuer')
+
+
 class InvalidSignatureError(VerificationError):
     """
         Raised if the verification of a token fails because the token's signature does not validate the token's content.

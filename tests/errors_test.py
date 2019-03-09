@@ -9,6 +9,7 @@ from easyjwt import ImmatureTokenError
 from easyjwt import InvalidClaimSetError
 from easyjwt import InvalidClassError
 from easyjwt import InvalidIssuedAtError
+from easyjwt import InvalidIssuerError
 from easyjwt import InvalidSignatureError
 from easyjwt import MissingRequiredClaimsError
 from easyjwt import UnspecifiedClassError
@@ -163,6 +164,19 @@ class InvalidIssuedAtErrorTest(TestCase):
 
         error = InvalidIssuedAtError()
         self.assertEqual('Invalid issued-at date', error._message)
+
+
+class InvalidIssuerErrorTest(TestCase):
+
+    def test_init(self):
+        """
+            Test the initialization of the error.
+
+            Expected Result: The message is correctly initialized.
+        """
+
+        error = InvalidIssuerError()
+        self.assertEqual('Invalid issuer', error._message)
 
 
 class InvalidSignatureErrorTest(TestCase):

@@ -15,6 +15,7 @@ from .errors import IncompatibleKeyError
 from .errors import InvalidClaimSetError
 from .errors import InvalidClassError
 from .errors import InvalidIssuedAtError
+from .errors import InvalidIssuerError
 from .errors import InvalidSignatureError
 from .errors import MissingRequiredClaimsError
 from .errors import UnspecifiedClassError
@@ -33,6 +34,7 @@ __all__ = [
     'InvalidClaimSetError',
     'InvalidClassError',
     'InvalidIssuedAtError',
+    'InvalidIssuerError',
     'InvalidSignatureError',
     'MissingRequiredClaimsError',
     'UnspecifiedClassError',

@@ -86,6 +86,10 @@ that some error classes may also listed below `Creation Errors`_.
     :members:
     :show-inheritance:
 
+.. autoclass:: easyjwt.InvalidIssuerError
+    :members:
+    :show-inheritance:
+
 .. autoclass:: easyjwt.InvalidSignatureError
     :members:
     :show-inheritance:
