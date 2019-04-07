@@ -14,6 +14,7 @@ from easyjwt import EasyJWT
 from easyjwt import ExpiredTokenError
 from easyjwt import ImmatureTokenError
 from easyjwt import IncompatibleKeyError
+from easyjwt import InvalidAudienceError
 from easyjwt import InvalidClaimSetError
 from easyjwt import InvalidClassError
 from easyjwt import InvalidIssuedAtError
@@ -38,6 +39,7 @@ class EasyJWTTest(TestCase):
         self.key = 'abcdefghijklmnopqrstuvwxyz'
 
         # Do not use microseconds.
+        self.audience = ['EasyJWT']
         self.expiration_date = datetime.utcnow().replace(microsecond=0) + timedelta(minutes=15)
         self.issued_at_date = datetime.utcnow().replace(microsecond=0) + timedelta(minutes=1)
         self.issuer = 'Issued by EasyJWT'
@@ -64,6 +66,7 @@ class EasyJWTTest(TestCase):
         self.assertEqual(easyjwt._get_class_name(), easyjwt._easyjwt_class)
         self.assertEqual(self.key, easyjwt._key)
 
+        self.assertIsNone(easyjwt.audience)
         self.assertIsNone(easyjwt.expiration_date)
         self.assertIsNone(easyjwt.issued_at_date)
         self.assertIsNone(easyjwt.issuer)
@@ -172,6 +175,7 @@ class EasyJWTTest(TestCase):
 
         claim_set = dict(
             _easyjwt_class='EasyJWT',
+            aud=self.audience,
             exp=self.expiration_date,
             iat=self.issued_at_date,
             iss=self.issuer,
@@ -181,6 +185,7 @@ class EasyJWTTest(TestCase):
         )
 
         easyjwt = EasyJWT(self.key)
+        easyjwt.audience = self.audience
         easyjwt.expiration_date = self.expiration_date
         easyjwt.issued_at_date = self.issued_at_date
         easyjwt.issuer = self.issuer
@@ -214,6 +219,7 @@ class EasyJWTTest(TestCase):
 
         claim_set = dict(
             _easyjwt_class='EasyJWT',
+            aud=None,
             exp=None,
             iat=None,
             iss=None,
@@ -298,6 +304,67 @@ class EasyJWTTest(TestCase):
 
         message = 'The specified key is an asymmetric key or x509 certificate and should not be used as an HMAC secret.'
         self.assertEqual(message, str(exception_cm.exception))
+
+    def test_verify_failure_invalid_audience_no_audience_expected(self):
+        """
+            Test verifying a token with an audience claim, but without expecting one when verifying the token.
+
+            Expected Result: An `InvalidAudienceError` is raised.
+        """
+
+        easyjwt_creation = EasyJWT(self.key)
+        easyjwt_creation.audience = self.audience
+        token = easyjwt_creation.create()
+
+        with self.assertRaises(InvalidAudienceError):
+            easyjwt_verification = EasyJWT.verify(token, self.key)
+            self.assertIsNone(easyjwt_verification)
+
+    def test_verify_failure_invalid_audience_no_audience_in_token(self):
+        """
+            Test verifying a token without an audience claim, but expecting one.
+
+            Expected Result: An `InvalidClaimSetError` is raised.
+        """
+
+        easyjwt_creation = EasyJWT(self.key)
+        token = easyjwt_creation.create()
+
+        with self.assertRaises(InvalidClaimSetError) as exception_cm:
+            easyjwt_verification = EasyJWT.verify(token, self.key, audience=self.audience)
+            self.assertIsNone(easyjwt_verification)
+
+        self.assertIn('audience', exception_cm.exception.missing_claims)
+
+    def test_verify_failure_invalid_audience_wrong_audience(self):
+        """
+            Test verifying a token with an audience claim, but expecting a different audience when verifying the token.
+
+            Expected Result: An `InvalidAudienceError` is raised.
+        """
+
+        easyjwt_creation = EasyJWT(self.key)
+        easyjwt_creation.audience = self.audience
+        token = easyjwt_creation.create()
+
+        with self.assertRaises(InvalidAudienceError):
+            easyjwt_verification = EasyJWT.verify(token, self.key, audience=['PyJWT'])
+            self.assertIsNone(easyjwt_verification)
+
+    def test_verify_failure_invalid_audience_wrong_type(self):
+        """
+            Test verifying a token with an audience claim, but giving an audience of a wrong type.
+
+            Expected Result: An `InvalidAudienceError` is raised.
+        """
+
+        easyjwt_creation = EasyJWT(self.key)
+        easyjwt_creation.audience = self.audience
+        token = easyjwt_creation.create()
+
+        with self.assertRaises(InvalidAudienceError):
+            easyjwt_verification = EasyJWT.verify(token, self.key, audience=42.1337)
+            self.assertIsNone(easyjwt_verification)
 
     def test_verify_failure_invalid_claim_set(self):
         """
@@ -452,6 +519,7 @@ class EasyJWTTest(TestCase):
         """
 
         easyjwt_creation = EasyJWT(self.key)
+        easyjwt_creation.audience = self.audience
         easyjwt_creation.expiration_date = self.expiration_date
         easyjwt_creation.issuer = self.issuer
         easyjwt_creation.JWT_ID = self.JWT_ID
@@ -459,9 +527,10 @@ class EasyJWTTest(TestCase):
         easyjwt_creation.subject = self.subject
         token = easyjwt_creation.create()
 
-        easyjwt_verification = EasyJWT.verify(token, self.key, issuer=self.issuer)
+        easyjwt_verification = EasyJWT.verify(token, self.key, issuer=self.issuer, audience=self.audience)
         self.assertIsNotNone(easyjwt_verification)
         self.assertEqual(easyjwt_creation._key, easyjwt_verification._key)
+        self.assertEqual(easyjwt_creation.audience, easyjwt_verification.audience)
         self.assertEqual(easyjwt_creation.expiration_date, easyjwt_verification.expiration_date)
         self.assertEqual(easyjwt_creation.issued_at_date, easyjwt_verification.issued_at_date)
         self.assertEqual(easyjwt_creation.issuer, easyjwt_verification.issuer)
@@ -486,6 +555,7 @@ class EasyJWTTest(TestCase):
         easyjwt_verification = EasyJWT.verify(token, self.key)
         self.assertIsNotNone(easyjwt_verification)
         self.assertEqual(easyjwt_creation._key, easyjwt_verification._key)
+        self.assertEqual(easyjwt_creation.audience, easyjwt_verification.audience)
         self.assertEqual(easyjwt_creation.expiration_date, easyjwt_verification.expiration_date)
         self.assertEqual(easyjwt_creation.issued_at_date, easyjwt_verification.issued_at_date)
         self.assertEqual(easyjwt_creation.issuer, easyjwt_verification.issuer)
@@ -504,7 +574,7 @@ class EasyJWTTest(TestCase):
             Expected Result: A set with the claim names for the `EasyJWT` class and all optional claims returned.
         """
 
-        claim_names = {'_easyjwt_class', 'exp', 'iat', 'iss', 'jti', 'nbf', 'sub'}
+        claim_names = {'_easyjwt_class', 'aud', 'exp', 'iat', 'iss', 'jti', 'nbf', 'sub'}
         easyjwt = EasyJWT(self.key)
         self.assertSetEqual(claim_names, easyjwt._get_claim_names())
 
@@ -607,6 +677,7 @@ class EasyJWTTest(TestCase):
         nbf_timestamp = int(self.not_before_date.replace(tzinfo=timezone.utc).timestamp())
         claim_set = dict(
             _easyjwt_class='EasyJWT',
+            aud=self.audience,
             exp=exp_timestamp,
             iat=iat_timestamp,
             iss=self.issuer,
@@ -617,6 +688,7 @@ class EasyJWTTest(TestCase):
 
         easyjwt = EasyJWT(self.key)
         easyjwt._restore_claim_set(claim_set)
+        self.assertEqual(self.audience, easyjwt.audience)
         self.assertEqual(self.expiration_date, easyjwt.expiration_date)
         self.assertEqual(self.issued_at_date, easyjwt.issued_at_date)
         self.assertEqual(self.issuer, easyjwt.issuer)
@@ -638,6 +710,7 @@ class EasyJWTTest(TestCase):
 
         easyjwt = EasyJWT(self.key)
         easyjwt._restore_claim_set(claim_set)
+        self.assertIsNone(easyjwt.audience)
         self.assertIsNone(easyjwt.expiration_date)
         self.assertIsNone(easyjwt.issued_at_date)
         self.assertIsNone(easyjwt.issuer)
@@ -751,6 +824,7 @@ class EasyJWTTest(TestCase):
         """
 
         easyjwt = EasyJWT(self.key)
+        easyjwt.audience = self.audience
         easyjwt.expiration_date = self.expiration_date
         easyjwt.issued_at_date = self.issued_at_date
         easyjwt.issuer = self.issuer
@@ -789,6 +863,15 @@ class EasyJWTTest(TestCase):
 
         for instance_var in EasyJWT._public_non_claims:
             self.assertFalse(EasyJWT._is_claim(instance_var), f'{instance_var} unexpectedly is a claim')
+
+    def test_is_claim_audience(self):
+        """
+            Test if the instance variable for the audience is a claim.
+
+            Expected Result: `True`.
+        """
+
+        self.assertTrue(EasyJWT._is_claim('audience'))
 
     def test_is_claim_expiration_date(self):
         """
@@ -879,6 +962,15 @@ class EasyJWTTest(TestCase):
     # _is_optional_claim()
     # ====================
 
+    def test_is_optional_claim_audience(self):
+        """
+            Test if the claim for the audience is optional.
+
+            Expected Result: `True`
+        """
+
+        self.assertFalse(EasyJWT._is_optional_claim('audience'))
+
     def test_is_optional_claim_easyjwt_class(self):
         """
             Test if the claim for the `EasyJWT` class is optional.
@@ -966,6 +1058,15 @@ class EasyJWTTest(TestCase):
     # _map_claim_name_to_instance_var()
     # =================================
 
+    def test_map_claim_name_to_instance_var_audience(self):
+        """
+            Test that the audience is correctly mapped from claim name to instance variable.
+
+            Expected Result: The instance variable for the audience is returned.
+        """
+
+        self.assertEqual('audience', EasyJWT._map_claim_name_to_instance_var('aud'))
+
     def test_map_claim_name_to_instance_var_expiration_date(self):
         """
             Test that the expiration date is correctly mapped from claim name to instance variable.
@@ -1033,6 +1134,15 @@ class EasyJWTTest(TestCase):
 
     # _map_instance_var_to_claim_name()
     # =================================
+
+    def test_map_instance_var_to_claim_name_audience(self):
+        """
+            Test that the audience is correctly mapped from instance variable to claim name.
+
+            Expected Result: The claim name for the audience is returned.
+        """
+
+        self.assertEqual('aud', EasyJWT._map_instance_var_to_claim_name('audience'))
 
     def test_map_instance_var_to_claim_name_expiration_date(self):
         """

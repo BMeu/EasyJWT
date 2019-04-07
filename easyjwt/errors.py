@@ -104,6 +104,17 @@ class ImmatureTokenError(VerificationError):
         super().__init__('Token is not yet valid')
 
 
+class InvalidAudienceError(VerificationError):
+    """
+        Raised if the verification of a token fails because the audience with which the application tries to verify
+        a token is not included in the token's audience claim, or the audience given in the verify method is not a
+        string, an iterable, or None.
+    """
+
+    def __init__(self) -> None:
+        super().__init__('Invalid audience')
+
+
 class InvalidClaimSetError(VerificationError):
     """
         Raised if the verification of a token fails because the claim set is invalid due to missing or unexpected
@@ -180,7 +191,7 @@ class InvalidClassError(VerificationError):
 
 class InvalidIssuedAtError(VerificationError):
     """
-        Raised if the verification of a token fails because the key used for decoding the token is invalid.
+        Raised if the verification of a token fails because the issued-at date specified in a token is not an integer.
     """
 
     def __init__(self) -> None:

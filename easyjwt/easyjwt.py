@@ -9,8 +9,10 @@ from typing import Any
 from typing import Callable
 from typing import ClassVar
 from typing import Dict
+from typing import Iterable
 from typing import Optional
 from typing import Set
+from typing import Union
 
 from datetime import datetime
 
@@ -21,6 +23,7 @@ from jwt import DecodeError as JWT_DecodeError
 from jwt import ExpiredSignatureError as JWT_ExpiredSignatureError
 from jwt import ImmatureSignatureError as JWT_ImmatureSignatureError
 from jwt import InvalidAlgorithmError as JWT_InvalidAlgorithmError
+from jwt import InvalidAudienceError as JWT_InvalidAudienceError
 from jwt import InvalidIssuedAtError as JWT_InvalidIssuedAtError
 from jwt import InvalidIssuerError as JWT_InvalidIssuerError
 from jwt import InvalidSignatureError as JWT_InvalidSignatureError
@@ -31,9 +34,10 @@ from jwt.exceptions import InvalidKeyError as JWT_InvalidKeyError
 from . import Algorithm
 from . import ExpiredTokenError
 from . import ImmatureTokenError
+from . import IncompatibleKeyError
+from . import InvalidAudienceError
 from . import InvalidClaimSetError
 from . import InvalidClassError
-from . import IncompatibleKeyError
 from . import InvalidIssuedAtError
 from . import InvalidIssuerError
 from . import InvalidSignatureError
@@ -89,6 +93,7 @@ class EasyJWT(object):
     """
 
     _instance_var_claim_name_mapping: ClassVar[bidict] = bidict(
+        audience='aud',
         expiration_date='exp',
         issued_at_date='iat',
         issuer='iss',
@@ -109,6 +114,7 @@ class EasyJWT(object):
     """
 
     _optional_claims: ClassVar[Set[str]] = {
+        'aud',
         'exp',
         'iat',
         'iss',
@@ -142,6 +148,16 @@ class EasyJWT(object):
     # endregion
 
     # region Instance Variables
+
+    audience: Optional[Union[Iterable[str], str]]
+    """
+        The audience for which this token is intended. This instance variable is mapped to the registered claim ``aud``.
+
+        When verifying a token with an audience claim, the application must identify itself with at least one of the
+        audience values specified in the audience claim. Otherwise, an :class:`InvalidAudienceError` will be raised.
+        If the application specifies an audience during verification, but the token does not contain an audience claim,
+        a :class:`InvalidClaimSetError` will be raised.
+    """
 
     expiration_date: Optional[datetime]
     """
@@ -229,6 +245,7 @@ class EasyJWT(object):
         self._easyjwt_class = self._get_class_name()
         self._key = key
 
+        self.audience = None
         self.expiration_date = None
         self.issued_at_date = None
         self.issuer = None
@@ -305,7 +322,12 @@ class EasyJWT(object):
     # region Token Restoration
 
     @classmethod
-    def verify(cls, token: str, key: str, issuer: Optional[str] = None) -> 'EasyJWT':
+    def verify(cls,
+               token: str,
+               key: str,
+               issuer: Optional[str] = None,
+               audience: Optional[Union[Iterable[str], str]] = None
+               ) -> 'EasyJWT':
         """
             Verify the given JSON Web Token.
 
@@ -313,6 +335,7 @@ class EasyJWT(object):
             :param key: The key used for decoding the token. This key must be the same with which the token has been
                         created.
             :param issuer: The issuer of the token to verify.
+            :param audience: The audience for which the token is intended.
             :return: The object representing the token. The claim values are set on the corresponding instance
                      variables.
             :raise ExpiredTokenError: If the claim set contains an expiration date claim ``exp`` that has passed.
@@ -320,6 +343,9 @@ class EasyJWT(object):
                                        reached.
             :raise IncompatibleKeyError: If the given key is incompatible with the algorithm used for decoding the
                                          token.
+            :raise InvalidAudienceError: If the given audience is not specified in the token's audience claim, or no
+                                         audience is given when verifying a token with an audience claim, or the given
+                                         audience is not a string, an iterable, or `None`.
             :raise InvalidClaimSetError: If the claim set does not contain exactly the expected (non-optional) claims.
             :raise InvalidClassError: If the claim set is not verified with the class with which the token has been
                                       created.
@@ -338,11 +364,9 @@ class EasyJWT(object):
         # Decode the given token and raise own errors for a clean interface.
         algorithms = easyjwt._get_decode_algorithms()
 
-        # TODO: When implementing the audience, check for TypeError (api_jwt.py, line 121).
-        # TODO: When implementing the audience, check for MissingRequiredClaim (api_jwt.py, line 184).
-
+        claim_set = dict()
         try:
-            claim_set = jwt_decode(token, easyjwt._key, algorithms=algorithms, issuer=issuer)
+            claim_set = jwt_decode(token, easyjwt._key, algorithms=algorithms, issuer=issuer, audience=audience)
 
         except JWT_ExpiredSignatureError:
             raise ExpiredTokenError()
@@ -352,6 +376,9 @@ class EasyJWT(object):
 
         except JWT_InvalidAlgorithmError:
             raise UnsupportedAlgorithmError()
+
+        except JWT_InvalidAudienceError:
+            raise InvalidAudienceError()
 
         except JWT_InvalidIssuedAtError:
             raise InvalidIssuedAtError()
@@ -371,6 +398,10 @@ class EasyJWT(object):
 
         except (JWT_InvalidTokenError, JWT_DecodeError) as error:
             raise VerificationError(str(error))
+
+        except TypeError as error:
+            if str(error) == 'audience must be a string, iterable, or None':
+                raise InvalidAudienceError()
 
         # Verify and restore the token.
         easyjwt._verify_claim_set(claim_set)

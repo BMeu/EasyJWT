@@ -74,6 +74,10 @@ that some error classes may also listed below `Creation Errors`_.
     :members:
     :show-inheritance:
 
+.. autoclass:: easyjwt.InvalidAudienceError
+    :members:
+    :show-inheritance:
+
 .. autoclass:: easyjwt.InvalidClaimSetError
     :members:
     :show-inheritance:

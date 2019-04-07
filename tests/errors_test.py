@@ -6,6 +6,7 @@ from unittest import TestCase
 from easyjwt import EasyJWTError
 from easyjwt import ExpiredTokenError
 from easyjwt import ImmatureTokenError
+from easyjwt import InvalidAudienceError
 from easyjwt import InvalidClaimSetError
 from easyjwt import InvalidClassError
 from easyjwt import InvalidIssuedAtError
@@ -91,6 +92,19 @@ class ImmatureTokenErrorTest(TestCase):
 
         error = ImmatureTokenError()
         self.assertEqual('Token is not yet valid', error._message)
+
+
+class InvalidAudienceErrorTest(TestCase):
+
+    def test_init(self):
+        """
+            Test the initialization of the error.
+
+            Expected Result: The message is correctly initialized.
+        """
+
+        error = InvalidAudienceError()
+        self.assertEqual('Invalid audience', error._message)
 
 
 class InvalidClaimSetErrorTest(TestCase):

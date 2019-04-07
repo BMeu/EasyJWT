@@ -12,6 +12,7 @@ from .errors import EasyJWTError
 from .errors import ExpiredTokenError
 from .errors import ImmatureTokenError
 from .errors import IncompatibleKeyError
+from .errors import InvalidAudienceError
 from .errors import InvalidClaimSetError
 from .errors import InvalidClassError
 from .errors import InvalidIssuedAtError
@@ -31,6 +32,7 @@ __all__ = [
     'ExpiredTokenError',
     'ImmatureTokenError',
     'IncompatibleKeyError',
+    'InvalidAudienceError',
     'InvalidClaimSetError',
     'InvalidClassError',
     'InvalidIssuedAtError',
