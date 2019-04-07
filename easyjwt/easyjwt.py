@@ -364,44 +364,45 @@ class EasyJWT(object):
         # Decode the given token and raise own errors for a clean interface.
         algorithms = easyjwt._get_decode_algorithms()
 
-        claim_set = dict()
         try:
             claim_set = jwt_decode(token, easyjwt._key, algorithms=algorithms, issuer=issuer, audience=audience)
 
         except JWT_ExpiredSignatureError:
-            raise ExpiredTokenError()
+            raise ExpiredTokenError() from None
 
         except JWT_ImmatureSignatureError:
-            raise ImmatureTokenError()
+            raise ImmatureTokenError() from None
 
         except JWT_InvalidAlgorithmError:
-            raise UnsupportedAlgorithmError()
+            raise UnsupportedAlgorithmError() from None
 
         except JWT_InvalidAudienceError:
-            raise InvalidAudienceError()
+            raise InvalidAudienceError() from None
 
         except JWT_InvalidIssuedAtError:
-            raise InvalidIssuedAtError()
+            raise InvalidIssuedAtError() from None
 
         except JWT_InvalidIssuerError:
-            raise InvalidIssuerError()
+            raise InvalidIssuerError() from None
 
         except JWT_InvalidKeyError as error:
-            raise IncompatibleKeyError(str(error))
+            raise IncompatibleKeyError(str(error)) from None
 
         except JWT_InvalidSignatureError:
-            raise InvalidSignatureError()
+            raise InvalidSignatureError() from None
 
         except JWT_MissingRequiredClaimError as error:
             # Map the missing claims to their instance variable names.
-            raise InvalidClaimSetError(missing_claims={easyjwt._map_claim_name_to_instance_var(error.claim)})
+            raise InvalidClaimSetError(missing_claims={easyjwt._map_claim_name_to_instance_var(error.claim)}) from None
 
         except (JWT_InvalidTokenError, JWT_DecodeError) as error:
-            raise VerificationError(str(error))
+            raise VerificationError(str(error)) from None
 
         except TypeError as error:
             if str(error) == 'audience must be a string, iterable, or None':
-                raise InvalidAudienceError()
+                raise InvalidAudienceError() from None
+            else:  # pragma: no cover
+                raise error from None
 
         # Verify and restore the token.
         easyjwt._verify_claim_set(claim_set)
