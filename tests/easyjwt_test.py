@@ -47,6 +47,14 @@ class EasyJWTTest(TestCase):
         self.not_before_date = datetime.utcnow().replace(microsecond=0) - timedelta(minutes=5)
         self.subject = 'EasyJWT UnitTest'
 
+    def tearDown(self):
+        """
+            Clean up after each test case.
+        """
+
+        # Always reset the class variables to their defaults to prevent unexpected behaviour.
+        EasyJWT.strict_verification = True
+
     # endregion
 
     # region Instantiation
@@ -54,11 +62,34 @@ class EasyJWTTest(TestCase):
     # __init__()
     # ==========
 
-    def test_init(self):
+    def test_init_lenient_verification(self):
         """
-            Test initializing a new token object.
+            Test initializing a new token object, with strict verification disabled.
 
-            Expected Result: The instance variables are set correctly.
+            Expected Result: The instance variables are set correctly, the _easywt_class instance variable does not
+                             exist.
+        """
+
+        EasyJWT.strict_verification = False
+        easyjwt = EasyJWT(self.key)
+
+        self.assertNotIn('_easyjwt_class', vars(easyjwt))
+        self.assertEqual(self.key, easyjwt._key)
+
+        self.assertIsNone(easyjwt.audience)
+        self.assertIsNone(easyjwt.expiration_date)
+        self.assertIsNone(easyjwt.issued_at_date)
+        self.assertIsNone(easyjwt.issuer)
+        self.assertIsNone(easyjwt.JWT_ID)
+        self.assertIsNone(easyjwt.not_before_date)
+        self.assertIsNone(easyjwt.subject)
+
+    def test_init_strict_verification(self):
+        """
+            Test initializing a new token object, with strict verification enabled.
+
+            Expected Result: The instance variables are set correctly, the _easyjwt_class instance variable is
+                             initialized.
         """
 
         easyjwt = EasyJWT(self.key)
@@ -119,6 +150,30 @@ class EasyJWTTest(TestCase):
 
         self.assertEqual('Required empty claims: {_easyjwt_class}', str(exception_cm.exception))
 
+    def test_create_success_lenient_verification(self):
+        """
+            Test creating a token with strict verification disabled.
+
+            Expected Result: A token is created successfully. The create token can be decoded.
+        """
+
+        EasyJWT.strict_verification = False
+
+        easyjwt = EasyJWT(self.key)
+        easyjwt.expiration_date = self.expiration_date
+        easyjwt.issuer = self.issuer
+        easyjwt.JWT_ID = self.JWT_ID
+        easyjwt.not_before_date = self.not_before_date
+        easyjwt.subject = self.subject
+
+        token = easyjwt.create()
+        self.assertIsNotNone(token)
+
+        self.assertIsNotNone(easyjwt.issued_at_date)
+
+        claim_set = decode(token, self.key, algorithms=easyjwt._get_decode_algorithms())
+        self.assertIsNotNone(claim_set)
+
     def test_create_success_with_issued_at_date(self):
         """
              Test creating a token with specifying an issued-at date.
@@ -165,6 +220,19 @@ class EasyJWTTest(TestCase):
 
     # _get_claim_set()
     # ================
+
+    def test_get_claim_set_lenient_verification(self):
+        """
+            Test getting the claim set with strict verification disabled.
+
+            Expected Result: The `_easyjwt_class` claim is not included.
+        """
+
+        EasyJWT.strict_verification = False
+        claim_set = dict()
+
+        easyjwt = EasyJWT(self.key)
+        self.assertDictEqual(claim_set, easyjwt._get_claim_set())
 
     def test_get_claim_set_with_optional_claims(self):
         """
@@ -510,6 +578,32 @@ class EasyJWTTest(TestCase):
 
         self.assertEqual('Expiration Time claim (exp) must be an integer.', str(exception_cm.exception))
 
+    def test_verify_success_lenient_verification(self):
+        """
+            Test verifying a token without the `_easyjwt_class` claim with strict verification disabled.
+
+            Expected Result: The token is successfully verified and an object representing the token is returned.
+        """
+
+        EasyJWT.strict_verification = False
+
+        easyjwt_creation = EasyJWT(self.key)
+        easyjwt_creation.JWT_ID = self.JWT_ID
+        easyjwt_creation.subject = self.subject
+        token = easyjwt_creation.create()
+
+        easyjwt_verification = EasyJWT.verify(token, self.key)
+        self.assertIsNotNone(easyjwt_verification)
+        self.assertEqual(easyjwt_creation._key, easyjwt_verification._key)
+        self.assertEqual(easyjwt_creation.audience, easyjwt_verification.audience)
+        self.assertEqual(easyjwt_creation.expiration_date, easyjwt_verification.expiration_date)
+        self.assertEqual(easyjwt_creation.issued_at_date, easyjwt_verification.issued_at_date)
+        self.assertEqual(easyjwt_creation.issuer, easyjwt_verification.issuer)
+        self.assertEqual(easyjwt_creation.JWT_ID, easyjwt_verification.JWT_ID)
+        self.assertEqual(easyjwt_creation.not_before_date, easyjwt_verification.not_before_date)
+        self.assertEqual(easyjwt_creation.subject, easyjwt_verification.subject)
+        self.assertNotIn('_easyjwt_class', vars(easyjwt_verification))
+
     def test_verify_success_with_validated_registered_claims(self):
         """
             Test verifying a valid token with valid registered claims that are validated (exp, iss, nbf), using the
@@ -567,9 +661,22 @@ class EasyJWTTest(TestCase):
     # _get_claim_names()
     # ==================
 
-    def test_get_claim_names(self):
+    def test_get_claim_names_lenient_verification(self):
         """
-            Test getting the set of claim names.
+            Test getting the set of claim names with strict verification disabled.
+
+            Expected Result: A set with the claim names for the `EasyJWT` class and all optional claims returned.
+        """
+
+        EasyJWT.strict_verification = False
+
+        claim_names = {'aud', 'exp', 'iat', 'iss', 'jti', 'nbf', 'sub'}
+        easyjwt = EasyJWT(self.key)
+        self.assertSetEqual(claim_names, easyjwt._get_claim_names())
+
+    def test_get_claim_names_strict_verification(self):
+        """
+            Test getting the set of claim names with strict verification enabled.
 
             Expected Result: A set with the claim names for the `EasyJWT` class and all optional claims returned.
         """
@@ -815,6 +922,27 @@ class EasyJWTTest(TestCase):
             easyjwt._verify_claim_set(claim_set)
 
         self.assertEqual('Missing claims: {email}. Unexpected claims: {user_id}', str(exception_cm.exception))
+
+    def test_verify_claim_set_success_lenient_verification(self):
+        """
+            Test verifying a valid claim set without an `_easyjwt_class` claim with strict verification disabled.
+
+            Expected result: `True`
+        """
+
+        EasyJWT.strict_verification = False
+
+        easyjwt = EasyJWT(self.key)
+        easyjwt.audience = self.audience
+        easyjwt.expiration_date = self.expiration_date
+        easyjwt.issued_at_date = self.issued_at_date
+        easyjwt.issuer = self.issuer
+        easyjwt.JWT_ID = self.JWT_ID
+        easyjwt.not_before_date = self.not_before_date
+        easyjwt.subject = self.subject
+
+        claim_set = easyjwt._get_claim_set()
+        self.assertTrue(easyjwt._verify_claim_set(claim_set))
 
     def test_verify_claim_set_success_with_optional_claims(self):
         """

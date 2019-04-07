@@ -79,6 +79,18 @@ class EasyJWT(object):
         This variable is not part of the claim set.
     """
 
+    strict_verification: ClassVar[bool] = True
+    """
+        If set to `True` (by default), verifying a token will fail if the token has not been created with the class
+        with which it has been created.
+
+        If you want to verify tokens created by third parties (i.e. tokens that have not been created by the
+        application verifying the token), you must set this option to `False`.
+
+        Setting this option to `False` will also remove the meta claim from created tokens that `EasyJWT` uses to
+        identify the class with which the token has been created.
+    """
+
     _claim_restore_methods: ClassVar[Dict[str, Callable[[Optional[Any]], Optional[Any]]]] = dict(
         expiration_date=restore_timestamp_to_datetime,
         issued_at_date=restore_timestamp_to_datetime,
@@ -139,6 +151,7 @@ class EasyJWT(object):
     _public_non_claims: ClassVar[Set[str]] = {
         'algorithm',
         'previous_algorithms',
+        'strict_verification',
     }
     """
         Set of instance variable names that are not part of the claim set although their names do not begin with an
@@ -156,7 +169,7 @@ class EasyJWT(object):
         When verifying a token with an audience claim, the application must identify itself with at least one of the
         audience values specified in the audience claim. Otherwise, an :class:`InvalidAudienceError` will be raised.
         If the application specifies an audience during verification, but the token does not contain an audience claim,
-        a :class:`InvalidClaimSetError` will be raised.
+        an :class:`InvalidClaimSetError` will be raised.
     """
 
     expiration_date: Optional[datetime]
@@ -242,7 +255,9 @@ class EasyJWT(object):
             :param key: The private key that is used for encoding and decoding the token.
         """
 
-        self._easyjwt_class = self._get_class_name()
+        if self.strict_verification:
+            self._easyjwt_class = self._get_class_name()
+
         self._key = key
 
         self.audience = None
@@ -481,13 +496,14 @@ class EasyJWT(object):
         """
 
         # Check the token's class: it must be specified and be this class.
-        class_name = self._get_class_name()
-        claim_class_name = claim_set.get('_easyjwt_class', None)
-        if claim_class_name is None:
-            raise UnspecifiedClassError()
+        if self.strict_verification:
+            class_name = self._get_class_name()
+            claim_class_name = claim_set.get('_easyjwt_class', None)
+            if claim_class_name is None:
+                raise UnspecifiedClassError()
 
-        if claim_class_name != class_name:
-            raise InvalidClassError(expected_class=class_name, actual_class=claim_class_name)
+            if claim_class_name != class_name:
+                raise InvalidClassError(expected_class=class_name, actual_class=claim_class_name)
 
         # Determine missing and unexpected claims. Missing claims are those specified in this class but not given in the
         # claim set. Unexpected claims are those given in the claim set but not specified in this class.
