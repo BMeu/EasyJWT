@@ -864,60 +864,6 @@ class EasyJWTTest(TestCase):
         for instance_var in EasyJWT._public_non_claims:
             self.assertFalse(EasyJWT._is_claim(instance_var), f'{instance_var} unexpectedly is a claim')
 
-    def test_is_claim_audience(self):
-        """
-            Test if the instance variable for the audience is a claim.
-
-            Expected Result: `True`.
-        """
-
-        self.assertTrue(EasyJWT._is_claim('audience'))
-
-    def test_is_claim_expiration_date(self):
-        """
-            Test if the instance variable for the expiration date is a claim.
-
-            Expected Result: `True`.
-        """
-
-        self.assertTrue(EasyJWT._is_claim('expiration_date'))
-
-    def test_is_claim_issued_at_date(self):
-        """
-            Test if the instance variable for the issued-at date is a claim.
-
-            Expected Result: `True`.
-        """
-
-        self.assertTrue(EasyJWT._is_claim('issued_at_date'))
-
-    def test_is_claim_issuer(self):
-        """
-            Test if the instance variable for the issuer is a claim.
-
-            Expected Result: `True`.
-        """
-
-        self.assertTrue(EasyJWT._is_claim('issuer'))
-
-    def test_is_claim_JWT_ID(self):
-        """
-            Test if the instance variable for the JWT ID is a claim.
-
-            Expected Result: `True`.
-        """
-
-        self.assertTrue(EasyJWT._is_claim('JWT ID'))
-
-    def test_is_claim_not_before_date(self):
-        """
-            Test if the instance variable for the not-before date is a claim.
-
-            Expected Result: `True`.
-        """
-
-        self.assertTrue(EasyJWT._is_claim('not_before_date'))
-
     def test_is_claim_private_instance_vars(self):
         """
             Test if private instance variables that are not in the whitelist are claims.
@@ -940,15 +886,6 @@ class EasyJWTTest(TestCase):
         self.assertNotIn(instance_var, EasyJWT._private_claims)
         self.assertTrue(EasyJWT._is_claim(instance_var))
 
-    def test_is_claim_subject(self):
-        """
-            Test if the instance variable for the subject is a claim.
-
-            Expected Result: `True`.
-        """
-
-        self.assertTrue(EasyJWT._is_claim('subject'))
-
     def test_is_claim_whitelist(self):
         """
             Test if the instance variables in the whitelist are claims.
@@ -962,15 +899,6 @@ class EasyJWTTest(TestCase):
     # _is_optional_claim()
     # ====================
 
-    def test_is_optional_claim_audience(self):
-        """
-            Test if the claim for the audience is optional.
-
-            Expected Result: `True`
-        """
-
-        self.assertFalse(EasyJWT._is_optional_claim('audience'))
-
     def test_is_optional_claim_easyjwt_class(self):
         """
             Test if the claim for the `EasyJWT` class is optional.
@@ -979,42 +907,6 @@ class EasyJWTTest(TestCase):
         """
 
         self.assertFalse(EasyJWT._is_optional_claim('_easyjwt_class'))
-
-    def test_is_optional_claim_expiration_date(self):
-        """
-            Test if the claim for the expiration date is optional.
-
-            Expected Result: `True`
-        """
-
-        self.assertTrue(EasyJWT._is_optional_claim('exp'))
-
-    def test_is_optional_claim_issued_at_date(self):
-        """
-            Test if the claim for the issued-at date is optional.
-
-            Expected Result: `True`
-        """
-
-        self.assertTrue(EasyJWT._is_optional_claim('iat'))
-
-    def test_is_optional_claim_issuer(self):
-        """
-            Test if the claim for the issuer is optional.
-
-            Expected Result: `True`
-        """
-
-        self.assertTrue(EasyJWT._is_optional_claim('iss'))
-
-    def test_is_optional_claim_JWT_ID(self):
-        """
-            Test if the claim for the JWT ID is optional.
-
-            Expected Result: `True`
-        """
-
-        self.assertTrue(EasyJWT._is_optional_claim('jti'))
 
     def test_is_optional_claim_non_optional_claim(self):
         """
@@ -1027,15 +919,6 @@ class EasyJWTTest(TestCase):
         self.assertNotIn(claim, EasyJWT._optional_claims)
         self.assertFalse(EasyJWT._is_optional_claim(claim))
 
-    def test_is_optional_claim_not_before_date(self):
-        """
-            Test if the claim for the not-before date is optional.
-
-            Expected Result: `True`
-        """
-
-        self.assertTrue(EasyJWT._is_optional_claim('nbf'))
-
     def test_is_optional_claim_optional_set(self):
         """
             Test if the claims in the optional claims set are optional.
@@ -1046,80 +929,18 @@ class EasyJWTTest(TestCase):
         for claim in EasyJWT._optional_claims:
             self.assertTrue(EasyJWT._is_optional_claim(claim), f'{claim} unexpectedly is not optional')
 
-    def test_is_optional_claim_subject(self):
-        """
-            Test if the claim for the subject is optional.
-
-            Expected Result: `True`
-        """
-
-        self.assertTrue(EasyJWT._is_optional_claim('sub'))
-
     # _map_claim_name_to_instance_var()
     # =================================
 
-    def test_map_claim_name_to_instance_var_audience(self):
+    def test_map_claim_name_to_instance_var_mapped(self):
         """
-            Test that the audience is correctly mapped from claim name to instance variable.
+            Test that all claim names in the mapping return the corresponding instance variable name.
 
-            Expected Result: The instance variable for the audience is returned.
-        """
-
-        self.assertEqual('audience', EasyJWT._map_claim_name_to_instance_var('aud'))
-
-    def test_map_claim_name_to_instance_var_expiration_date(self):
-        """
-            Test that the expiration date is correctly mapped from claim name to instance variable.
-
-            Expected Result: The instance variable for the expiration date is returned.
+            Expected Result: The instance variable name for each claim name is returned.
         """
 
-        self.assertEqual('expiration_date', EasyJWT._map_claim_name_to_instance_var('exp'))
-
-    def test_map_claim_name_to_instance_var_issued_at_date(self):
-        """
-            Test that the issued-at date is correctly mapped from claim name to instance variable.
-
-            Expected Result: The instance variable for the issued-at date is returned.
-        """
-
-        self.assertEqual('issued_at_date', EasyJWT._map_claim_name_to_instance_var('iat'))
-
-    def test_map_claim_name_to_instance_var_issuer(self):
-        """
-            Test that the issuer is correctly mapped from claim name to instance variable.
-
-            Expected Result: The instance variable for the issuer is returned.
-        """
-
-        self.assertEqual('issuer', EasyJWT._map_claim_name_to_instance_var('iss'))
-
-    def test_map_claim_name_to_instance_var_JWT_ID(self):
-        """
-            Test that the JWT ID is correctly mapped from claim name to instance variable.
-
-            Expected Result: The instance variable for the JWT ID is returned.
-        """
-
-        self.assertEqual('JWT_ID', EasyJWT._map_claim_name_to_instance_var('jti'))
-
-    def test_map_claim_name_to_instance_var_not_before_date(self):
-        """
-            Test that the not-before date is correctly mapped from claim name to instance variable.
-
-            Expected Result: The instance variable for the not-before date is returned.
-        """
-
-        self.assertEqual('not_before_date', EasyJWT._map_claim_name_to_instance_var('nbf'))
-
-    def test_map_claim_name_to_instance_var_subject(self):
-        """
-            Test that the subject is correctly mapped from claim name to instance variable.
-
-            Expected Result: The instance variable for the subject is returned.
-        """
-
-        self.assertEqual('subject', EasyJWT._map_claim_name_to_instance_var('sub'))
+        for instance_var, claim_name in EasyJWT._instance_var_claim_name_mapping.items():
+            self.assertEqual(instance_var, EasyJWT._map_claim_name_to_instance_var(instance_var))
 
     def test_map_claim_name_to_instance_var_unmapped(self):
         """
@@ -1135,68 +956,15 @@ class EasyJWTTest(TestCase):
     # _map_instance_var_to_claim_name()
     # =================================
 
-    def test_map_instance_var_to_claim_name_audience(self):
+    def test_map_instance_var_to_claim_name_mapped(self):
         """
-            Test that the audience is correctly mapped from instance variable to claim name.
+            Test that all instance variable names in the mapping return the corresponding claim name.
 
-            Expected Result: The claim name for the audience is returned.
-        """
-
-        self.assertEqual('aud', EasyJWT._map_instance_var_to_claim_name('audience'))
-
-    def test_map_instance_var_to_claim_name_expiration_date(self):
-        """
-            Test that the expiration date is correctly mapped from instance variable to claim name.
-
-            Expected Result: The claim name for the expiration date is returned.
+            Expected Result: The claim name for each instance variable name is returned.
         """
 
-        self.assertEqual('exp', EasyJWT._map_instance_var_to_claim_name('expiration_date'))
-
-    def test_map_instance_var_to_claim_name_issued_at_date(self):
-        """
-            Test that the issued-at date is correctly mapped from instance variable to claim name.
-
-            Expected Result: The claim name for the issued-at date is returned.
-        """
-
-        self.assertEqual('iat', EasyJWT._map_instance_var_to_claim_name('issued_at_date'))
-
-    def test_map_instance_var_to_claim_name_issuer(self):
-        """
-            Test that the issuer date is correctly mapped from instance variable to claim name.
-
-            Expected Result: The claim name for the issuer is returned.
-        """
-
-        self.assertEqual('iss', EasyJWT._map_instance_var_to_claim_name('issuer'))
-
-    def test_map_instance_var_to_claim_name_JWT_ID(self):
-        """
-            Test that the JWT ID is correctly mapped from instance variable to claim name.
-
-            Expected Result: The claim name for the JWT ID is returned.
-        """
-
-        self.assertEqual('jti', EasyJWT._map_instance_var_to_claim_name('JWT_ID'))
-
-    def test_map_instance_var_to_claim_name_not_before_date(self):
-        """
-            Test that the not-before date is correctly mapped from instance variable to claim name.
-
-            Expected Result: The claim name for the not-before date is returned.
-        """
-
-        self.assertEqual('nbf', EasyJWT._map_instance_var_to_claim_name('not_before_date'))
-
-    def test_map_instance_var_to_claim_name_subject(self):
-        """
-            Test that the subject is correctly mapped from instance variable to claim name.
-
-            Expected Result: The claim name for the subject is returned.
-        """
-
-        self.assertEqual('sub', EasyJWT._map_instance_var_to_claim_name('subject'))
+        for instance_var, claim_name in EasyJWT._instance_var_claim_name_mapping.items():
+            self.assertEqual(claim_name, EasyJWT._map_instance_var_to_claim_name(instance_var))
 
     def test_map_instance_var_to_claim_name_unmapped(self):
         """
@@ -1245,5 +1013,110 @@ class EasyJWTTest(TestCase):
         # Note: If this assertion ever fails it might be because the issued-at date is set within `create()` and the
         # difference between the two calls is too large.
         self.assertEqual(easyjwt.create(), str(easyjwt))
+
+    # endregion
+
+    # region Registered Claims
+
+    # Audience
+    # ========
+
+    def test_registered_claim_audience(self):
+        """
+            Test the registered claim ``aud``.
+
+            Expected Result: The field is an optional claim and correctly mapped to the claim name and vice versa.
+        """
+        instance_var_name = 'audience'
+        claim_name = 'aud'
+
+        self.assertTrue(EasyJWT._is_claim(instance_var_name))
+        self.assertTrue(EasyJWT._is_optional_claim(claim_name))
+        self.assertEqual(instance_var_name, EasyJWT._map_claim_name_to_instance_var(claim_name))
+        self.assertEqual(claim_name, EasyJWT._map_instance_var_to_claim_name(instance_var_name))
+
+    def test_registered_claim_expiration_date(self):
+        """
+            Test the registered claim ``exp``.
+
+            Expected Result: The field is an optional claim and correctly mapped to the claim name and vice versa.
+        """
+        instance_var_name = 'expiration_date'
+        claim_name = 'exp'
+
+        self.assertTrue(EasyJWT._is_claim(instance_var_name))
+        self.assertTrue(EasyJWT._is_optional_claim(claim_name))
+        self.assertEqual(instance_var_name, EasyJWT._map_claim_name_to_instance_var(claim_name))
+        self.assertEqual(claim_name, EasyJWT._map_instance_var_to_claim_name(instance_var_name))
+
+    def test_registered_claim_issued_at_date(self):
+        """
+            Test the registered claim ``iat``.
+
+            Expected Result: The field is an optional claim and correctly mapped to the claim name and vice versa.
+        """
+        instance_var_name = 'issued_at_date'
+        claim_name = 'iat'
+
+        self.assertTrue(EasyJWT._is_claim(instance_var_name))
+        self.assertTrue(EasyJWT._is_optional_claim(claim_name))
+        self.assertEqual(instance_var_name, EasyJWT._map_claim_name_to_instance_var(claim_name))
+        self.assertEqual(claim_name, EasyJWT._map_instance_var_to_claim_name(instance_var_name))
+
+    def test_registered_claim_issuer(self):
+        """
+            Test the registered claim ``iss``.
+
+            Expected Result: The field is an optional claim and correctly mapped to the claim name and vice versa.
+        """
+        instance_var_name = 'issuer'
+        claim_name = 'iss'
+
+        self.assertTrue(EasyJWT._is_claim(instance_var_name))
+        self.assertTrue(EasyJWT._is_optional_claim(claim_name))
+        self.assertEqual(instance_var_name, EasyJWT._map_claim_name_to_instance_var(claim_name))
+        self.assertEqual(claim_name, EasyJWT._map_instance_var_to_claim_name(instance_var_name))
+
+    def test_registered_claim_JWT_ID(self):
+        """
+            Test the registered claim ``jti``.
+
+            Expected Result: The field is an optional claim and correctly mapped to the claim name and vice versa.
+        """
+        instance_var_name = 'JWT_ID'
+        claim_name = 'jti'
+
+        self.assertTrue(EasyJWT._is_claim(instance_var_name))
+        self.assertTrue(EasyJWT._is_optional_claim(claim_name))
+        self.assertEqual(instance_var_name, EasyJWT._map_claim_name_to_instance_var(claim_name))
+        self.assertEqual(claim_name, EasyJWT._map_instance_var_to_claim_name(instance_var_name))
+
+    def test_registered_claim_not_before_date(self):
+        """
+            Test the registered claim ``nbf``.
+
+            Expected Result: The field is an optional claim and correctly mapped to the claim name and vice versa.
+        """
+        instance_var_name = 'not_before_date'
+        claim_name = 'nbf'
+
+        self.assertTrue(EasyJWT._is_claim(instance_var_name))
+        self.assertTrue(EasyJWT._is_optional_claim(claim_name))
+        self.assertEqual(instance_var_name, EasyJWT._map_claim_name_to_instance_var(claim_name))
+        self.assertEqual(claim_name, EasyJWT._map_instance_var_to_claim_name(instance_var_name))
+
+    def test_registered_claim_subject(self):
+        """
+            Test the registered claim ``sub``.
+
+            Expected Result: The field is an optional claim and correctly mapped to the claim name and vice versa.
+        """
+        instance_var_name = 'subject'
+        claim_name = 'sub'
+
+        self.assertTrue(EasyJWT._is_claim(instance_var_name))
+        self.assertTrue(EasyJWT._is_optional_claim(claim_name))
+        self.assertEqual(instance_var_name, EasyJWT._map_claim_name_to_instance_var(claim_name))
+        self.assertEqual(claim_name, EasyJWT._map_instance_var_to_claim_name(instance_var_name))
 
     # endregion
