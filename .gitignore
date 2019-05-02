@@ -106,4 +106,4 @@ venv.bak/
 
 # IDE
 .idea
-.pre-commit-hook.sh
+pre-commit-hook.sh
