@@ -6,6 +6,7 @@ verify_ssl = true
 [dev-packages]
 coverage = "*"
 flake8 = "*"
+m2r = "*"
 Sphinx = "*"
 
 [packages]

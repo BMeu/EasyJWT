@@ -26,7 +26,7 @@ VERSION = '0.1.0'
 
 author = AUTHOR
 # noinspection PyShadowingBuiltins
-copyright = f'Developed by {AUTHOR}. {PROJECT} is licensed under the MIT license.'
+copyright = f'Developed by {AUTHOR}. {PROJECT} is licensed under the MIT license'
 project = PROJECT
 release = VERSION
 version = VERSION
@@ -38,6 +38,7 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
+    'm2r',
 ]
 
 add_module_names = False
@@ -64,7 +65,6 @@ html_use_index = False
 html_theme = 'alabaster'
 html_theme_options = {
     'description': f'{PROJECT}: {DESCRIPTION}',
-    'logo': 'logo.png',
     'github_banner': True,
     'github_user': 'BMeu',
     'github_repo': 'EasyJWT',
