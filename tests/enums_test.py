@@ -1,4 +1,4 @@
-#!venv/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 from unittest import TestCase
@@ -18,6 +18,7 @@ class AlgorithmTest(TestCase):
 
         key = 'abcdefghijklmnopqrstuvwxyz'
 
+        # noinspection PyTypeChecker
         for algorithm in list(Algorithm):
 
             # Set the algorithm on the class so it is used for decoding.

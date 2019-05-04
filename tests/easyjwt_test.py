@@ -1,4 +1,4 @@
-#!venv/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 from unittest import TestCase
@@ -431,6 +431,7 @@ class EasyJWTTest(TestCase):
         token = easyjwt_creation.create()
 
         with self.assertRaises(InvalidAudienceError):
+            # noinspection PyTypeChecker
             easyjwt_verification = EasyJWT.verify(token, self.key, audience=42.1337)
             self.assertIsNone(easyjwt_verification)
 
