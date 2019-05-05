@@ -8,6 +8,29 @@ EasyJWT provides a simple interface to creating and verifying
 JWT, and to then create and accept tokens with these claims without having to check if all the required data is given
 or if the token actually is the one you expect.
 
+```python
+from easyjwt import EasyJWT
+
+# Define the claims of your token.
+class MySuperSimpleJWT(EasyJWT):
+
+    def __init__(self, key):
+        super().__init__(key)
+        
+        # Define a claim `name`.
+        self.name = None
+
+# Create a token with some values.
+token_object = MySuperSimpleJWT('Super secret key')
+token_object.name = 'Zaphod Beeblebrox'
+token = token_object.create()
+
+# Verify the created token.
+verified_token_object = MySuperSimpleJWT.verify(token, 'Super secret key')
+
+assert verified_token_object.name == 'Zaphod Beeblebrox'
+```
+
 ## Features
 
  * Define the claims of your token once as a class, then use this class to easily create and verify multiple tokens.
@@ -63,8 +86,8 @@ class MySuperSimpleJWT(EasyJWT):
         self._not_an_attribute = True
 ```
 
-You can now create the actual token by instantiating your class, setting your values on this token object, and then
-calling EasyJWT's `create` method, passing the key with which the token will be encoded.
+You can now create the actual token by instantiating your class with the key with which the token will be encoded,
+setting your values on this token object, and then calling EasyJWT's `create` method.
 
 ```python
 token_object = MySuperSimpleJWT('Super secret key')
