@@ -4,7 +4,7 @@ API
 .. automodule:: easyjwt
 
 .. contents:: Contents
-    :backlinks: top
+    :backlinks: none
     :local:
 
 Classes

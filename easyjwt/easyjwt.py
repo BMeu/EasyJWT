@@ -50,7 +50,7 @@ from .restoration import restore_timestamp_to_datetime
 
 class EasyJWT(object):
     """
-        A base class for representing JSON Web Tokens (JWT).
+        The base class for representing JSON Web Tokens (JWT).
 
         To use a JWT, you have to create a subclass inheriting from :class:`EasyJWT`. All public instance variables of
         this class (that is, all instance variables not starting with an underscore) will make up the claim set of your

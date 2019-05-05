@@ -2,9 +2,13 @@
 # -*- coding: utf-8 -*-
 
 """
-    EasyJWT
+    EasyJWT provides a simple interface to creating and verifying
+    `JSON Web Tokens (JWTs) <https://tools.ietf.org/html/rfc7519>`_ in Python. It allows you to once define the claims
+    of the JWT, and to then create and accept tokens with these claims without having to check if all the required data
+    is given or if the token actually is the one you expect.
+
+    See the included README file or the documentation for details on how to use EasyJWT.
 """
-# TODO: Improve package documentation.
 
 from .enums import Algorithm
 from .errors import CreationError
