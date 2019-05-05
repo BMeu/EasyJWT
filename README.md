@@ -218,7 +218,8 @@ class MySuperSimpleJWT(EasyJWT):
     # The usual definition of the token's claim set ...
 ```
 
-You can find a list of all available algorithms in the API documentation.
+You can find a list of all available algorithms in the
+[API documentation](https://easyjwt.readthedocs.io/en/latest/api.html#easyjwt.Algorithm).
 
 ### Optional Claims
 
