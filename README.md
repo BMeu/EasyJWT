@@ -28,7 +28,6 @@ token = token_object.create()
 
 # Verify the created token.
 verified_token_object = MySuperSimpleJWT.verify(token, 'Super secret key')
-
 assert verified_token_object.name == 'Zaphod Beeblebrox'
 ```
 
