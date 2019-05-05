@@ -1,7 +1,7 @@
 # EasyJWT
 
-![PyPI](https://img.shields.io/pypi/v/easyjwt.svg)
-![PyPI - License](https://img.shields.io/pypi/l/easyjwt.svg)
+[![PyPI](https://img.shields.io/pypi/v/easyjwt.svg)](https://pypi.org/project/easyjwt/)
+[![PyPI - License](https://img.shields.io/pypi/l/easyjwt.svg)](https://github.com/BMeu/EasyJWT/blob/master/LICENSE)
 [![Build Status](https://travis-ci.org/BMeu/EasyJWT.svg?branch=master)](https://travis-ci.org/BMeu/EasyJWT)
 [![codecov](https://codecov.io/gh/BMeu/EasyJWT/branch/master/graph/badge.svg)](https://codecov.io/gh/BMeu/EasyJWT)
 [![Documentation Status](https://readthedocs.org/projects/easyjwt/badge/?version=latest)](https://easyjwt.readthedocs.io/en/latest/?badge=latest)
