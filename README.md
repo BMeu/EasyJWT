@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/BMeu/EasyJWT.svg?branch=master)](https://travis-ci.org/BMeu/EasyJWT)
 [![codecov](https://codecov.io/gh/BMeu/EasyJWT/branch/master/graph/badge.svg)](https://codecov.io/gh/BMeu/EasyJWT)
+[![Documentation Status](https://readthedocs.org/projects/easyjwt/badge/?version=latest)](https://easyjwt.readthedocs.io/en/latest/?badge=latest)
 
 EasyJWT provides a simple interface to creating and verifying
 [JSON Web Tokens (JWTs)](https://tools.ietf.org/html/rfc7519) in Python. It allows you to once define the claims of the
