@@ -1,8 +1,11 @@
 # EasyJWT
 
+![PyPI](https://img.shields.io/pypi/v/easyjwt.svg)
+![PyPI - License](https://img.shields.io/pypi/l/easyjwt.svg)
 [![Build Status](https://travis-ci.org/BMeu/EasyJWT.svg?branch=master)](https://travis-ci.org/BMeu/EasyJWT)
 [![codecov](https://codecov.io/gh/BMeu/EasyJWT/branch/master/graph/badge.svg)](https://codecov.io/gh/BMeu/EasyJWT)
 [![Documentation Status](https://readthedocs.org/projects/easyjwt/badge/?version=latest)](https://easyjwt.readthedocs.io/en/latest/?badge=latest)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/easyjwt.svg)
 
 EasyJWT provides a simple interface to creating and verifying
 [JSON Web Tokens (JWTs)](https://tools.ietf.org/html/rfc7519) in Python. It allows you to once define the claims of the
@@ -48,7 +51,8 @@ assert verified_token_object.name == 'Zaphod Beeblebrox'
 
 EasyJWT requires Python 3.6 or newer.
 
-EasyJWT ~~is~~ will shortly be available on PyPI. You can install it using your favorite package manager.
+EasyJWT is available [on PyPI](https://pypi.org/project/easyjwt/). You can install it using your favorite package
+manager.
 
  * PIP:
 
