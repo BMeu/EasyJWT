@@ -12,3 +12,6 @@ Sphinx = "*"
 [packages]
 bidict = "*"
 PyJWT = "*"
+
+[requires]
+python_version = "3.6"
