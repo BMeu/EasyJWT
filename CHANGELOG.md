@@ -11,6 +11,9 @@ Possible log types:
 * `[fixed]` for any bug fixes.
 * `[security]` to invite users to upgrade in case of vulnerabilities.
 
+## 0.1.1 (May 10<sup>th</sup>, 2019)
+ * `[fixed]` Fix typing of the `verify()` method 
+
 ## 0.1.0 (May 5<sup>th</sup>, 2019)
 
  * Initial release of EasyJWT

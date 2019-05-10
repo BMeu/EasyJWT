@@ -12,6 +12,8 @@ from typing import Dict
 from typing import Iterable
 from typing import Optional
 from typing import Set
+from typing import Type
+from typing import TypeVar
 from typing import Union
 
 from datetime import datetime
@@ -46,6 +48,11 @@ from . import UnspecifiedClassError
 from . import UnsupportedAlgorithmError
 from . import VerificationError
 from .restoration import restore_timestamp_to_datetime
+
+EasyJWTClass = TypeVar('EasyJWTClass', bound='EasyJWT')
+"""
+    The type of the :class:`.EasyJWT` class, allowing subclasses.
+"""
 
 
 class EasyJWT(object):
@@ -337,12 +344,12 @@ class EasyJWT(object):
     # region Token Restoration
 
     @classmethod
-    def verify(cls,
+    def verify(cls: Type[EasyJWTClass],
                token: str,
                key: str,
                issuer: Optional[str] = None,
                audience: Optional[Union[Iterable[str], str]] = None
-               ) -> 'EasyJWT':
+               ) -> EasyJWTClass:
         """
             Verify the given JSON Web Token.
 

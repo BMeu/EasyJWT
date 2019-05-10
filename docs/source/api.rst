@@ -116,3 +116,10 @@ restoration
 
 .. automodule:: easyjwt.restoration
     :members:
+
+Types
+-----
+
+This section lists the types defined by |project|.
+
+.. autodata:: easyjwt.easyjwt.EasyJWTClass

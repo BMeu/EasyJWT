@@ -27,11 +27,13 @@ from .errors import UnspecifiedClassError
 from .errors import UnsupportedAlgorithmError
 from .errors import VerificationError
 from .easyjwt import EasyJWT
+from .easyjwt import EasyJWTClass
 
 __all__ = [
     'Algorithm',
     'CreationError',
     'EasyJWT',
+    'EasyJWTClass',
     'EasyJWTError',
     'ExpiredTokenError',
     'ImmatureTokenError',
