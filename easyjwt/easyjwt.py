@@ -343,6 +343,7 @@ class EasyJWT(object):
 
     # region Token Restoration
 
+    # noinspection PyProtectedMember
     @classmethod
     def verify(cls: Type[EasyJWTClass],
                token: str,
