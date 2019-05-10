@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 AUTHOR = 'Bastian Meyer'
 DESCRIPTION = 'Super simple JSON Web Tokens in Python'
 PROJECT = 'EasyJWT'
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 
 author = AUTHOR
 # noinspection PyShadowingBuiltins

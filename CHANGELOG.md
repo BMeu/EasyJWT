@@ -12,7 +12,8 @@ Possible log types:
 * `[security]` to invite users to upgrade in case of vulnerabilities.
 
 ## 0.1.1 (May 10<sup>th</sup>, 2019)
- * `[fixed]` Fix typing of the `verify()` method 
+ * `[fixed]` Fix typing of the `verify()` method for correct type checks in subclasses.
+ * Improve API documentation.
 
 ## 0.1.0 (May 5<sup>th</sup>, 2019)
 
