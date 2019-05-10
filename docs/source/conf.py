@@ -43,6 +43,7 @@ extensions = [
 
 add_module_names = False
 autoclass_content = 'both'
+autodoc_member_order = 'bysource'
 language = None
 master_doc = 'index'
 pygments_style = 'sphinx'
