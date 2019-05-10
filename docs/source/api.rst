@@ -30,7 +30,7 @@ Errors
 
 This section lists all error classes defined by |project|.
 
-.. autoclass:: easyjwt.EasyJWTError
+.. autoexception:: easyjwt.EasyJWTError
     :members:
     :show-inheritance:
 
@@ -40,15 +40,15 @@ Creation Errors
 This section lists all error classed defined by |project| that may be raised during the creation of a token. Note that
 some error classes may also listed below `Verification Errors`_.
 
-.. autoclass:: easyjwt.CreationError
+.. autoexception:: easyjwt.CreationError
     :members:
     :show-inheritance:
 
-.. autoclass:: easyjwt.IncompatibleKeyError
+.. autoexception:: easyjwt.IncompatibleKeyError
     :members:
     :show-inheritance:
 
-.. autoclass:: easyjwt.MissingRequiredClaimsError
+.. autoexception:: easyjwt.MissingRequiredClaimsError
     :members:
     :show-inheritance:
 
@@ -58,51 +58,51 @@ Verification Errors
 This section lists all error classed defined by |project| that may be raised during the verification of a token. Note
 that some error classes may also listed below `Creation Errors`_.
 
-.. autoclass:: easyjwt.VerificationError
+.. autoexception:: easyjwt.VerificationError
     :members:
     :show-inheritance:
 
-.. autoclass:: easyjwt.ExpiredTokenError
+.. autoexception:: easyjwt.ExpiredTokenError
     :members:
     :show-inheritance:
 
-.. autoclass:: easyjwt.ImmatureTokenError
+.. autoexception:: easyjwt.ImmatureTokenError
     :members:
     :show-inheritance:
 
-.. autoclass:: easyjwt.IncompatibleKeyError
+.. autoexception:: easyjwt.IncompatibleKeyError
     :members:
     :show-inheritance:
 
-.. autoclass:: easyjwt.InvalidAudienceError
+.. autoexception:: easyjwt.InvalidAudienceError
     :members:
     :show-inheritance:
 
-.. autoclass:: easyjwt.InvalidClaimSetError
+.. autoexception:: easyjwt.InvalidClaimSetError
     :members:
     :show-inheritance:
 
-.. autoclass:: easyjwt.InvalidClassError
+.. autoexception:: easyjwt.InvalidClassError
     :members:
     :show-inheritance:
 
-.. autoclass:: easyjwt.InvalidIssuedAtError
+.. autoexception:: easyjwt.InvalidIssuedAtError
     :members:
     :show-inheritance:
 
-.. autoclass:: easyjwt.InvalidIssuerError
+.. autoexception:: easyjwt.InvalidIssuerError
     :members:
     :show-inheritance:
 
-.. autoclass:: easyjwt.InvalidSignatureError
+.. autoexception:: easyjwt.InvalidSignatureError
     :members:
     :show-inheritance:
 
-.. autoclass:: easyjwt.UnspecifiedClassError
+.. autoexception:: easyjwt.UnspecifiedClassError
     :members:
     :show-inheritance:
 
-.. autoclass:: easyjwt.UnsupportedAlgorithmError
+.. autoexception:: easyjwt.UnsupportedAlgorithmError
     :members:
     :show-inheritance:
 
