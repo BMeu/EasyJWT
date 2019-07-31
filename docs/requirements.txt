@@ -15,7 +15,7 @@ m2r==0.2.1
 markupsafe==1.1.1
 mccabe==0.6.1
 mistune==0.8.4
-packaging==19.0
+packaging==19.1
 pycodestyle==2.5.0
 pyflakes==2.1.1
 pygments==2.4.2
