@@ -26,6 +26,7 @@ install:
 
 script:
   - flake8
+  - mypy --config-file=.mypy.ini easyjwt
   - coverage run -m unittest discover -v -s tests -p "*_test.py" -t .
   - sphinx-build -b html docs/source docs/build
 

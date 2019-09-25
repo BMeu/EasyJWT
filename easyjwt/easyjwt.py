@@ -76,7 +76,7 @@ class EasyJWT(object):
         This variable is not part of the claim set.
     """
 
-    previous_algorithms: ClassVar[Set[Algorithm]] = {}
+    previous_algorithms: ClassVar[Set[Algorithm]] = set()
     """
         All algorithms that have previously been used for encoding the token, needed for decoding the token.
 
@@ -416,7 +416,8 @@ class EasyJWT(object):
 
         except JWT_MissingRequiredClaimError as error:
             # Map the missing claims to their instance variable names.
-            raise InvalidClaimSetError(missing_claims={easyjwt._map_claim_name_to_instance_var(error.claim)}) from None
+            claim = error.claim  # type: ignore
+            raise InvalidClaimSetError(missing_claims={easyjwt._map_claim_name_to_instance_var(claim)}) from None
 
         except (JWT_InvalidTokenError, JWT_DecodeError) as error:
             raise VerificationError(str(error)) from None
@@ -587,7 +588,8 @@ class EasyJWT(object):
         """
 
         # If the claim_name name is not defined in the mapping, return its own name.
-        return cls._instance_var_claim_name_mapping.inv.get(claim_name, claim_name)
+        instance_var: str = cls._instance_var_claim_name_mapping.inv.get(claim_name, claim_name)
+        return instance_var
 
     @classmethod
     def _map_instance_var_to_claim_name(cls, instance_var: str) -> str:
@@ -599,7 +601,8 @@ class EasyJWT(object):
         """
 
         # If the instance variable is not defined in the mapping, return the variable's name.
-        return cls._instance_var_claim_name_mapping.get(instance_var, instance_var)
+        claim_name: str = cls._instance_var_claim_name_mapping.get(instance_var, instance_var)
+        return claim_name
 
     # endregion
 
@@ -618,7 +621,7 @@ class EasyJWT(object):
 
     # region System Methods
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
             Create the token.
 
