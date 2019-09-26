@@ -119,7 +119,7 @@ class EasyJWTTest(TestCase):
             Expected Result: An `IncompatibleKeyError` error is raised.
         """
 
-        # Ensure that the algorithm needs an HMAC key. Provide a asymmetric key instead.
+        # Ensure that the algorithm needs an HMAC key. Provide an asymmetric key instead.
         incompatible_key = '-----BEGIN PUBLIC KEY-----'
         self.assertIn(EasyJWT.algorithm, {Algorithm.HS256, Algorithm.HS384, Algorithm.HS512})
 
