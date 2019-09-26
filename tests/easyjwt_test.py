@@ -27,6 +27,7 @@ from easyjwt import VerificationError
 from easyjwt.restoration import restore_timestamp_to_datetime
 
 
+# noinspection DuplicatedCode
 class EasyJWTTest(TestCase):
 
     # region Test Setup
