@@ -11,5 +11,5 @@ mypy = "*"
 Sphinx = "*"
 
 [packages]
-bidict = "*"
+bidict = "~=0.21"
 PyJWT = "~=2.0"
