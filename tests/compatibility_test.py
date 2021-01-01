@@ -65,7 +65,7 @@ from easyjwt import EasyJWTError
 
 # region Configuration
 
-KEY = ('Gallia est omnis divisa in partes tres, quarum unam incolunt Belgae, aliam Aquitani, tertiam qui ipsorum ' +
+KEY = ('Gallia est omnis divisa in partes tres, quarum unam incolunt Belgae, aliam Aquitani, tertiam qui ipsorum '
        'lingua Celtae, nostra Galli appellantur.')
 """
     The key used for encrypting and decrypting the tokens.

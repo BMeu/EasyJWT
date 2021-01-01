@@ -50,7 +50,7 @@ pygments_style = 'sphinx'
 source_suffix = '.rst'
 templates_path = ['_templates']
 
-rst_prolog = ('.. |project| replace:: {name}\n' +
+rst_prolog = ('.. |project| replace:: {name}\n'
               '.. include:: <isonum.txt>').format(name=PROJECT)
 
 
