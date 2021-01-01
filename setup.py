@@ -6,7 +6,7 @@ with open('README.md', 'r') as readme:
 
 setup(
     name='easyjwt',
-    version='0.1.1',
+    version='0.2.0',
     packages=find_packages(exclude=['docs', 'tests*']),
 
     python_requires='>=3.6',
@@ -37,5 +37,6 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ],
 )

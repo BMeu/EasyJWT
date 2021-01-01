@@ -11,6 +11,10 @@ Possible log types:
 * `[fixed]` for any bug fixes.
 * `[security]` to invite users to upgrade in case of vulnerabilities.
 
+## 0.2.0 (January 1<sup>st</sup>, 2021)
+ * `[fixed]` Compatibility with updated dependencies.
+ * Lock dependencies.
+
 ## 0.1.1 (May 10<sup>th</sup>, 2019)
  * `[fixed]` Fix typing of the `verify()` method for correct type checks in subclasses.
  * Improve API documentation.
