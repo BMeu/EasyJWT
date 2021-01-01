@@ -6,7 +6,7 @@ verify_ssl = true
 [dev-packages]
 coverage = "*"
 flake8 = "*"
-m2r = "*"
+m2r2 = "*"
 mypy = "*"
 Sphinx = "*"
 

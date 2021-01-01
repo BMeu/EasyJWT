@@ -38,7 +38,7 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
-    'm2r',
+    'm2r2',
 ]
 
 add_module_names = False
