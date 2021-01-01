@@ -306,12 +306,10 @@ class EasyJWT(object):
         # Encode the object.
         claim_set = self._get_claim_set()
         try:
-            token_bytes = jwt_encode(claim_set, self._key, algorithm=self.algorithm.value)
+            token = jwt_encode(claim_set, self._key, algorithm=self.algorithm.value)
         except JWT_InvalidKeyError as error:
             raise IncompatibleKeyError(str(error))
 
-        # The encoded claim set is a bytestream. Create a UTF-8 string.
-        token = token_bytes.decode('utf-8')
         return token
 
     def _get_claim_set(self, with_empty_claims: bool = False) -> Dict[str, Any]:

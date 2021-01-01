@@ -12,4 +12,4 @@ Sphinx = "*"
 
 [packages]
 bidict = "*"
-PyJWT = "*"
+PyJWT = "~=2.0"
