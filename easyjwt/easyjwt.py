@@ -587,7 +587,7 @@ class EasyJWT(object):
         """
 
         # If the claim_name name is not defined in the mapping, return its own name.
-        instance_var: str = cls._instance_var_claim_name_mapping.inv.get(claim_name, claim_name)
+        instance_var: str = cls._instance_var_claim_name_mapping.inverse.get(claim_name, claim_name)
         return instance_var
 
     @classmethod
