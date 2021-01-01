@@ -11,6 +11,10 @@ Possible log types:
 * `[fixed]` for any bug fixes.
 * `[security]` to invite users to upgrade in case of vulnerabilities.
 
+## 0.2.1 (January 1<sup>st</sup>, 2021)
+
+ * `[fixed]` Dependencies in `setup.py`.
+
 ## 0.2.0 (January 1<sup>st</sup>, 2021)
  * `[fixed]` Compatibility with updated dependencies.
  * Lock dependencies.
