@@ -719,8 +719,8 @@ class EasyJWTTest(TestCase):
         EasyJWT.algorithm = Algorithm.HS256
         EasyJWT.previous_algorithms = [Algorithm.HS384, Algorithm.HS512]
 
-        algorithms = {Algorithm.HS256.value, Algorithm.HS384.value, Algorithm.HS512.value}
-        self.assertSetEqual(algorithms, EasyJWT._get_decode_algorithms())
+        algorithms = [Algorithm.HS384.value, Algorithm.HS512.value, Algorithm.HS256.value]
+        self.assertListEqual(algorithms, EasyJWT._get_decode_algorithms())
 
         # Restore the class variables.
         EasyJWT.algorithm = current_alg_temp

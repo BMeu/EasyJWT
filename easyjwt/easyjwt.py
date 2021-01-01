@@ -10,6 +10,7 @@ from typing import Callable
 from typing import ClassVar
 from typing import Dict
 from typing import Iterable
+from typing import List
 from typing import Optional
 from typing import Set
 from typing import Type
@@ -442,15 +443,15 @@ class EasyJWT(object):
         return set(self._get_claim_set(with_empty_claims=True).keys())
 
     @classmethod
-    def _get_decode_algorithms(cls) -> Set[str]:
+    def _get_decode_algorithms(cls) -> List[str]:
         """
             Get all algorithms for decoding.
 
             :return: A set of all algorithms ever used for encoding the tokens.
         """
 
-        algorithms = {algorithm.value for algorithm in cls.previous_algorithms}
-        algorithms.add(cls.algorithm.value)
+        algorithms = [algorithm.value for algorithm in cls.previous_algorithms]
+        algorithms.append(cls.algorithm.value)
         return algorithms
 
     @classmethod
