@@ -20,7 +20,7 @@ mypy==0.790
 packaging==20.8
 pycodestyle==2.6.0
 pyflakes==2.2.0
-pygments==2.7.3
+pygments==2.7.4
 pyparsing==2.4.7
 pytz==2020.5
 requests==2.25.1
